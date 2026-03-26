@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "Aura - Premium New Tab",
+  "version": "1.0.0",
+  "description": "A breathtaking, modular, context-aware personal workspace for your browser.",
+  "permissions": ["storage", "unlimitedStorage", "geolocation", "tabs", "scripting", "system.cpu", "system.memory"],
+  "host_permissions": ["<all_urls>"],
+  "chrome_url_overrides": {
+    "newtab": "index.html"
+  },
+  "action": {
+    "default_popup": "index.html"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["assets/*"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

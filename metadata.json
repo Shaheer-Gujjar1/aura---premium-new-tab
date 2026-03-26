@@ -1,0 +1,5 @@
+{
+  "name": "Aura - Premium New Tab",
+  "description": "A breathtaking, modular, context-aware personal workspace for your browser.",
+  "requestFramePermissions": ["geolocation"]
+}
