@@ -10,7 +10,7 @@ import { Bookmarks } from '../features/Bookmarks/Bookmarks';
 import { Weather } from '../features/Weather/Weather';
 import { GoogleApps } from '../components/GoogleApps';
 import { SearchBar } from '../features/Search/SearchBar';
-import { Settings, Maximize2, ListTodo, Minimize2, Bookmark, Sparkles, Link, Save, RotateCcw, Palette, GripHorizontal, Plus, X } from 'lucide-react';
+import { Settings, Maximize2, ListTodo, Minimize2, Bookmark, Sparkles, Link, Save, RotateCcw, Palette, GripHorizontal, Plus, X, EyeOff } from 'lucide-react';
 
 import { SettingsPanel } from '../components/SettingsPanel';
 import { WeatherDetail } from '../features/Weather/WeatherDetail';
@@ -20,9 +20,9 @@ import { WidgetLibrary } from '../features/CustomWidgets/WidgetLibrary';
 import { WidgetRenderer } from '../features/CustomWidgets/MiniWidgets';
 
 const NewTab: React.FC = () => {
-  const { 
-    preferences, 
-    setSettingsOpen, 
+  const {
+    preferences,
+    setSettingsOpen,
     isGoogleAppsOpen,
     setGoogleAppsOpen,
     toggleWidget,
@@ -36,7 +36,9 @@ const NewTab: React.FC = () => {
     isEditMode,
     setEditMode,
     activeWidgetSlots,
-    setWidgetInSlot
+    setWidgetInSlot,
+    isZenMode,
+    setZenMode,
   } = useStore();
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isThemeOpen, setIsThemeOpen] = useState(false);
@@ -48,6 +50,8 @@ const NewTab: React.FC = () => {
     { id: 'sunset', name: 'Sunset', colors: 'from-orange-900/40 via-red-900/40 to-purple-900/40' },
     { id: 'forest', name: 'Forest', colors: 'from-emerald-900/40 via-teal-900/40 to-cyan-900/40' },
     { id: 'minimal', name: 'Minimal', colors: 'from-zinc-900 via-zinc-800 to-zinc-900' },
+    { id: 'cyberpunk', name: 'Cyberpunk', colors: 'from-green-900/20 via-black to-green-900/20' },
+    { id: 'glass', name: 'Glass', colors: 'from-white/5 via-transparent to-white/5' },
   ];
 
   const currentTheme = themes.find(t => t.id === preferences.theme) || themes[0];
@@ -63,7 +67,7 @@ const NewTab: React.FC = () => {
       root.style.setProperty('--glass-opacity', config.glassOpacity);
       root.style.setProperty('--accent-color', config.accentColor);
       root.style.setProperty('--glow-color', config.glowColor);
-      
+
       // Apply font family globally
       document.body.style.fontFamily = config.fontFamily;
     }
@@ -85,7 +89,7 @@ const NewTab: React.FC = () => {
       document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
     };
   }, []);
-  
+
   // Extended Cross-Tab Media Detection
   useEffect(() => {
     // Only works when running as a Chrome Extension with "tabs" permission
@@ -96,11 +100,11 @@ const NewTab: React.FC = () => {
           if (audibleTabs.length > 0) {
             const activeTab = audibleTabs[0];
             const title = activeTab.title || 'Unknown Media';
-            
+
             // Basic extraction: "Video Title - YouTube" -> "Video Title"
             const cleanedTitle = title.split(' - ')[0].replace(/\(\d+\)\s/, '');
             const artist = title.includes(' - ') ? title.split(' - ')[1] : 'Audible Tab';
-            
+
             useStore.getState().setCurrentTrack({
               title: cleanedTitle,
               artist: artist
@@ -149,7 +153,7 @@ const NewTab: React.FC = () => {
       if (!isFullscreen) {
         const docEl = document.documentElement as any;
         const requestFullScreen = docEl.requestFullscreen || docEl.mozRequestFullScreen || docEl.webkitRequestFullScreen || docEl.msRequestFullscreen;
-        
+
         if (requestFullScreen) {
           await requestFullScreen.call(docEl);
         } else {
@@ -171,162 +175,180 @@ const NewTab: React.FC = () => {
     <div className={`relative h-screen w-full flex flex-col items-center justify-center p-4 md:p-8 overflow-hidden style-${preferences.themeConfig.contentStyle}`}>
       <BackgroundManager />
       <GoogleApps />
-      
+
       {/* Theme Overlay - Tint the background image with the theme colors */}
       <div className={`absolute inset-0 z-0 transition-colors duration-1000 bg-gradient-to-br ${currentTheme.colors} opacity-60 pointer-events-none`} />
 
       <SettingsPanel />
       <WeatherDetail />
       
-      {/* Top Bar */}
-      <div className="absolute top-4 left-4 right-4 md:top-8 md:left-8 md:right-8 flex justify-between items-start z-50">
-        <div className="flex flex-col gap-2 items-start shrink-0">
-          <DraggableWidget id="weather">
-            <Weather />
-          </DraggableWidget>
-          <DraggableWidget id="bookmarks">
-            <Bookmarks />
-          </DraggableWidget>
-          <DraggableWidget id="todo">
-            <TodoList />
-          </DraggableWidget>
-        </div>
+      {/* 1. Left Corner: Distraction Widgets (Hides in Zen) */}
+      <AnimatePresence>
+        {!isZenMode && (
+          <motion.div 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="absolute top-4 left-4 md:top-8 md:left-8 z-40 flex flex-col gap-2 items-start pointer-events-none"
+          >
+            <div className="pointer-events-auto flex flex-col gap-2">
+              <DraggableWidget id="weather">
+                <Weather />
+              </DraggableWidget>
+              <DraggableWidget id="bookmarks">
+                <Bookmarks />
+              </DraggableWidget>
+              <DraggableWidget id="todo">
+                <TodoList />
+              </DraggableWidget>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-        
-        <div className="flex flex-col items-end gap-3">
-          {/* First Line: System Controls */}
-          <div className="flex flex-wrap justify-end gap-2 md:gap-3">
-            <AnimatePresence>
-              {isLayoutModified && (
-                <motion.div 
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  className="flex gap-2"
-                >
-                  <button 
-                    onClick={saveLayout}
-                    className={`${preferences.themeConfig.cardClass} p-2 md:p-3 bg-emerald-500/20 border-emerald-500/30 hover:bg-emerald-500/30 text-emerald-400 transition-all flex items-center gap-2`}
-                    title="Save Layout"
-                  >
-                    <Save className="w-4 h-4 md:w-5 md:h-5" />
-                    <span className="hidden md:inline text-[10px] font-bold uppercase tracking-widest">Save</span>
-                  </button>
-                  <button 
-                    onClick={resetLayout}
-                    className={`${preferences.themeConfig.cardClass} p-2 md:p-3 bg-red-500/20 border-red-500/30 hover:bg-red-500/30 text-red-400 transition-all flex items-center gap-2`}
-                    title="Reset Layout"
-                  >
-                    <RotateCcw className="w-4 h-4 md:w-5 md:h-5" />
-                    <span className="hidden md:inline text-[10px] font-bold uppercase tracking-widest">Reset</span>
-                  </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
+      {/* 2. Right Corner: High-Density Control Hub (Zen & Main) */}
+      <div className="absolute top-4 right-4 md:top-8 md:right-8 z-[100] flex flex-col items-end gap-3 pointer-events-none">
+        {/* System Bar (Always Visible) */}
+        <div className="flex items-center gap-2 pointer-events-auto">
+          {/* Zen Toggle (Eye) */}
+          <button 
+            onClick={() => setZenMode(!isZenMode)}
+            className={`${preferences.themeConfig.cardClass} p-2 md:p-3 hover:bg-white/10 transition-all group relative ${isZenMode ? 'bg-[var(--accent-color)]/20 border-[var(--accent-color)]/30 scale-105' : 'bg-black/20 backdrop-blur-md border-white/10'}`}
+            title={isZenMode ? "Exit Zen Mode" : "Zen Mode"}
+          >
+            <EyeOff className={`w-4 h-4 md:w-5 md:h-5 transition-all ${isZenMode ? 'text-[var(--accent-color)]' : 'text-white/40 group-hover:text-white/70'}`} />
+          </button>
 
+          {/* Edit Mode Toggle (Hides in Zen) */}
+          {!isZenMode && (
             <button 
               onClick={() => setEditMode(!isEditMode)}
-              className={`${preferences.themeConfig.cardClass} p-2 md:p-3 hover:bg-white/10 transition-all group flex items-center gap-2 ${isEditMode ? 'bg-amber-500/20 border-amber-500/30 text-amber-400' : 'text-white/70'}`}
-              title={isEditMode ? "Exit Edit Mode" : "Edit Layout"}
+              className={`${preferences.themeConfig.cardClass} p-2 md:p-3 hover:bg-white/10 transition-all group relative ${isEditMode ? 'bg-white text-black' : 'bg-black/20 backdrop-blur-md border-white/10'}`}
+              title="Customize Layout"
             >
-              <GripHorizontal className="w-4 h-4 md:w-5 md:h-5" />
-              <span className="hidden md:inline text-[10px] font-bold uppercase tracking-widest">{isEditMode ? 'Done' : 'Edit'}</span>
+              <Palette className={`w-4 h-4 md:w-5 md:h-5 ${isEditMode ? 'text-black' : 'text-white/40 group-hover:text-white/70'}`} />
             </button>
+          )}
 
-            <button 
-              onClick={() => toggleWidget('bookmarks')}
-              className={`${preferences.themeConfig.cardClass} p-2 md:p-3 hover:bg-white/10 transition-all group ${isBookmarksVisible ? 'bg-white/20 border-white/30' : ''}`}
-              title="Toggle Bookmarks"
-            >
-              <Bookmark className={`w-4 h-4 md:w-5 md:h-5 transition-all ${isBookmarksVisible ? 'text-white' : 'text-white/70'}`} />
-            </button>
-            <button 
-              onClick={() => toggleWidget('todo')}
-              className={`${preferences.themeConfig.cardClass} p-2 md:p-3 hover:bg-white/10 transition-all group ${isTodoVisible ? 'bg-white/20 border-white/30' : ''}`}
-              title="Toggle Tasks"
-            >
-              <ListTodo className={`w-4 h-4 md:w-5 md:h-5 transition-all ${isTodoVisible ? 'text-white' : 'text-white/70'}`} />
-            </button>
-            <button 
-              onClick={toggleFullscreen}
-              className={`${preferences.themeConfig.cardClass} p-2 md:p-3 hover:bg-white/10 transition-all`}
-              title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
-            >
-              {isFullscreen ? (
-                <Minimize2 className="w-4 h-4 md:w-5 md:h-5 text-white/70" />
-              ) : (
-                <Maximize2 className="w-4 h-4 md:w-5 md:h-5 text-white/70" />
-              )}
-            </button>
-            <button 
-              onClick={() => setSettingsOpen(true)}
-              className={`${preferences.themeConfig.cardClass} p-2 md:p-3 hover:bg-white/10 transition-all`}
-              title="Settings"
-            >
-              <Settings className="w-4 h-4 md:w-5 md:h-5 text-white/70" />
-            </button>
-          </div>
-
-          {/* Second Line: Mode & Google Apps */}
-          <div className="flex justify-end gap-2 md:gap-3">
-            <button 
-              onClick={() => setGoogleAppsOpen(!isGoogleAppsOpen)}
-              className={`${preferences.themeConfig.cardClass} p-2 md:p-3 hover:bg-white/10 transition-all group flex items-center gap-2 ${isGoogleAppsOpen ? 'bg-white/20 border-white/30' : ''}`}
-              title="Google Ecosystem"
-            >
-              <div className="grid grid-cols-3 gap-0.5">
-                {[...Array(9)].map((_, i) => (
-                  <div key={i} className={`w-1 h-1 rounded-full transition-colors ${isGoogleAppsOpen ? 'bg-white' : 'bg-white/50 group-hover:bg-white'}`} />
-                ))}
-              </div>
-              <span className="hidden md:inline text-[10px] font-bold uppercase tracking-widest text-white/70">Apps</span>
-            </button>
-            
-            <button 
-              onClick={() => setActiveLinkCategory(activeLinkCategory === 'quick' ? 'ai' : 'quick')}
-              className={`${preferences.themeConfig.cardClass} p-2 md:p-3 hover:bg-white/10 transition-all group flex items-center gap-2 ${activeLinkCategory === 'ai' ? 'bg-indigo-500/20 border-indigo-500/30' : ''}`}
-              title={activeLinkCategory === 'quick' ? "Switch to AI Tools" : "Switch to Quick Links"}
-            >
-              {activeLinkCategory === 'quick' ? (
-                <>
-                  <Sparkles className="w-4 h-4 md:w-5 md:h-5 text-indigo-400" />
-                  <span className="hidden md:inline text-[10px] font-bold uppercase tracking-widest text-white/70">AI Mode</span>
-                </>
-              ) : (
-                <>
-                  <Link className="w-4 h-4 md:w-5 md:h-5 text-emerald-400" />
-                  <span className="hidden md:inline text-[10px] font-bold uppercase tracking-widest text-white/70">Quick Mode</span>
-                </>
-              )}
-            </button>
-          </div>
+          <button 
+            onClick={toggleFullscreen}
+            className={`${preferences.themeConfig.cardClass} p-2 md:p-3 bg-black/20 backdrop-blur-md border-white/10 hover:bg-white/10 transition-all relative`}
+            title="Fullscreen"
+          >
+            {isFullscreen ? <Minimize2 className="w-4 h-4 md:w-5 md:h-5 text-white/40" /> : <Maximize2 className="w-4 h-4 md:w-5 md:h-5 text-white/40" />}
+          </button>
+          
+          <button 
+            onClick={() => setSettingsOpen(true)}
+            className={`${preferences.themeConfig.cardClass} p-2 md:p-3 bg-black/20 backdrop-blur-md border-white/10 hover:bg-white/10 transition-all relative`}
+            title="Settings"
+          >
+            <Settings className="w-4 h-4 md:w-5 md:h-5 text-white/40" />
+          </button>
         </div>
+
+        {/* Action Bar (Hides in Zen) */}
+        {!isZenMode && (
+          <AnimatePresence>
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex flex-col items-end gap-2"
+            >
+              {/* Secondary Controls: Apps & Mode */}
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => setGoogleAppsOpen(!isGoogleAppsOpen)}
+                  className={`${preferences.themeConfig.cardClass} px-3 py-2 hover:bg-white/10 transition-all flex items-center gap-2 bg-black/20 border-white/10`}
+                >
+                   <div className="grid grid-cols-3 gap-0.5">
+                    {[...Array(9)].map((_, i) => (
+                      <div key={i} className={`w-0.5 h-0.5 rounded-full bg-white/50`} />
+                    ))}
+                  </div>
+                  <span className="text-[9px] font-bold uppercase tracking-widest text-white/70">Apps</span>
+                </button>
+                <button 
+                  onClick={() => setActiveLinkCategory(activeLinkCategory === 'quick' ? 'ai' : 'quick')}
+                  className={`${preferences.themeConfig.cardClass} px-3 py-2 hover:bg-white/10 transition-all flex items-center gap-2 bg-black/20 border-white/10`}
+                >
+                  <Sparkles className="w-3 h-3 text-indigo-400" />
+                  <span className="text-[9px] font-bold uppercase tracking-widest text-white/70">{activeLinkCategory === 'quick' ? 'AI' : 'Quick'}</span>
+                </button>
+              </div>
+
+              {/* Layout Persistence */}
+              {isLayoutModified && (
+                <div className="flex gap-2 mt-1">
+                  <button onClick={resetLayout} className="px-3 py-1.5 rounded-lg bg-white/5 text-[9px] font-bold uppercase tracking-widest text-white/40 hover:text-white border border-white/5 transition-all">
+                    Reset
+                  </button>
+                  <button onClick={saveLayout} className="px-3 py-1.5 rounded-lg bg-white text-black text-[9px] font-bold uppercase tracking-widest transition-all shadow-xl">
+                    Save
+                  </button>
+                </div>
+              )}
+            </motion.div>
+          </AnimatePresence>
+        )}
       </div>
  
-      {/* Main Content */}
-      <main className="relative z-20 flex flex-col items-center justify-center gap-3 md:gap-6 w-full max-w-6xl h-full py-8 scale-[0.85] md:scale-100">
-        <DraggableWidget id="clock">
-          <Clock />
-        </DraggableWidget>
-
-        <div className="flex flex-col items-center gap-6 w-full">
-          <SearchBar />
-          <DraggableWidget id="links">
-            <QuickLinks />
+      {/* 3. Main Center Content: Phased Zen Transition */}
+      <main className="relative z-20 flex flex-col items-center justify-center w-full h-full max-w-6xl py-12 overflow-hidden">
+        <motion.div 
+          animate={isZenMode ? { scale: 1.2, y: -20 } : { scale: 1, y: 0 }}
+          transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+          className="flex flex-col items-center justify-center gap-8 md:gap-12 w-full"
+        >
+          <DraggableWidget id="clock">
+            <Clock />
           </DraggableWidget>
-        </div>
+          
+          <motion.div
+            animate={{ 
+              opacity: 1, 
+              width: isZenMode ? '640px' : '520px',
+              maxWidth: '90%'
+            }}
+            transition={{ duration: 1, delay: 0.2 }}
+            className="w-full"
+          >
+            <SearchBar />
+          </motion.div>
+        </motion.div>
+
+        {/* Secondary Content (Hides in Zen) */}
+        <AnimatePresence>
+          {!isZenMode && (
+            <motion.div 
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 40 }}
+              transition={{ duration: 0.8 }}
+              className="flex flex-col items-center gap-6 w-full mt-12"
+            >
+              <DraggableWidget id="links">
+                <QuickLinks />
+              </DraggableWidget>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </main>
 
-      {/* Bottom Widgets */}
-      <div className="absolute bottom-4 left-4 md:bottom-8 md:left-8 z-10 flex flex-col gap-4 items-start">
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 0.4 }}
-          className="text-[10px] font-bold uppercase tracking-[0.3em] text-white"
-        >
-          Aura Workspace v1.5
-        </motion.div>
-      </div>
+      {/* 4. Bottom Features (Hides in Zen) */}
+      <AnimatePresence>
+        {!isZenMode && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute bottom-4 left-4 md:bottom-8 md:left-8 z-10 flex items-center gap-3 opacity-30 pointer-events-none"
+          >
+            <img src="/logo.png" alt="Aura Logo" className="w-5 h-5 grayscale brightness-200" />
+            <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-white">Aura Workspace</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className="absolute bottom-4 right-4 md:bottom-8 md:right-8 z-50 flex flex-col gap-4 items-end">
         <div className="flex flex-col gap-4">
@@ -334,12 +356,12 @@ const NewTab: React.FC = () => {
       </div>
 
       {/* Custom Widget Slots - Root-Level Bottom Right (Vertical) */}
-      <div className="absolute right-4 bottom-4 md:right-8 md:bottom-8 z-50 flex flex-col gap-4 items-end pointer-events-none">
+      <div className={`absolute right-4 bottom-4 md:right-8 md:bottom-8 z-50 flex flex-col gap-4 items-end pointer-events-none transition-opacity duration-700 ${isZenMode ? 'opacity-0' : 'opacity-100'}`}>
         <AnimatePresence mode="popLayout">
           {preferences.theme !== 'minimal' && [0, 1].map((idx) => {
             const activeId = activeWidgetSlots[idx];
             const isVisible = activeId || useStore.getState().isWidgetEditMode;
-            
+
             if (!isVisible) return null;
 
             return (
@@ -354,13 +376,13 @@ const NewTab: React.FC = () => {
                   <div className="flex flex-col gap-2">
                     {activeId ? (
                       <div className="relative group">
-                        <WidgetRenderer 
-                          id={activeId} 
-                          onRemove={() => setWidgetInSlot(idx, null)} 
+                        <WidgetRenderer
+                          id={activeId}
+                          onRemove={() => setWidgetInSlot(idx, null)}
                         />
                       </div>
                     ) : (
-                      <button 
+                      <button
                         onClick={() => setLibrarySlot(idx)}
                         className={`p-4 border-dashed border-2 border-[var(--accent-color)]/30 hover:border-[var(--accent-color)] bg-white/5 hover:bg-white/10 text-white/50 hover:text-white transition-all duration-300 flex flex-col items-center justify-center gap-2 group min-w-[140px] min-h-[80px] rounded-2xl relative overflow-hidden backdrop-blur-sm`}
                       >
@@ -376,13 +398,12 @@ const NewTab: React.FC = () => {
         </AnimatePresence>
 
         {/* Floating Edit Toggle */}
-        <button 
+        <button
           onClick={() => useStore.getState().toggleWidgetEditMode()}
-          className={`pointer-events-auto p-3 rounded-full transition-all shadow-2xl group relative ${
-            useStore.getState().isWidgetEditMode 
-              ? 'bg-[var(--accent-color)] text-black rotate-45 scale-110' 
+          className={`pointer-events-auto p-3 rounded-full transition-all shadow-2xl group relative ${useStore.getState().isWidgetEditMode
+              ? 'bg-[var(--accent-color)] text-black rotate-45 scale-110'
               : 'bg-white/5 hover:bg-white/10 text-white/40 hover:text-white scale-90'
-          }`}
+            }`}
         >
           <Plus className="w-5 h-5" />
           <div className="absolute right-[calc(100%+12px)] top-1/2 -translate-y-1/2 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
@@ -393,10 +414,10 @@ const NewTab: React.FC = () => {
         </button>
       </div>
 
-      <WidgetLibrary 
-        isOpen={librarySlot !== null} 
-        slotIndex={librarySlot || 0} 
-        onClose={() => setLibrarySlot(null)} 
+      <WidgetLibrary
+        isOpen={librarySlot !== null}
+        slotIndex={librarySlot || 0}
+        onClose={() => setLibrarySlot(null)}
       />
     </div>
   );

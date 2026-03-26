@@ -12,17 +12,61 @@ const ENGINES = [
 
 export const SearchBar: React.FC = () => {
   const [query, setQuery] = useState('');
+  const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const { preferences, setPreferences } = useStore();
 
   const currentEngine = ENGINES.find(e => e.id === preferences.searchEngine) || ENGINES[0];
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = (e: React.FormEvent, searchQuery?: string) => {
     e.preventDefault();
-    if (query.trim()) {
-      window.location.href = `${currentEngine.url}${encodeURIComponent(query)}`;
+    const finalQuery = searchQuery || query;
+    if (finalQuery.trim()) {
+      window.location.href = `${currentEngine.url}${encodeURIComponent(finalQuery)}`;
     }
   };
+
+  React.useEffect(() => {
+    if (!query.trim()) {
+      setSuggestions([]);
+      return;
+    }
+
+    const fetchSuggestionsJSONP = () => {
+      const callbackName = `jsonp_cb_${Date.now()}_${Math.round(Math.random() * 100000)}`;
+      
+      const script = document.createElement('script');
+      // Using DuckDuckGo's autocomplete API which supports JSONP callbacks
+      script.src = `https://duckduckgo.com/ac/?callback=${callbackName}&q=${encodeURIComponent(query)}`;
+      
+      (window as any)[callbackName] = (data: any) => {
+        if (Array.isArray(data)) {
+          // DuckDuckGo JSONP returns: [{phrase: "suggestion1"}, {phrase: "suggestion2"}]
+          const results = data.map((item: any) => item.phrase || item).filter(Boolean);
+          setSuggestions(results.slice(0, 8));
+        }
+        cleanup();
+      };
+      
+      const cleanup = () => {
+        if (document.head.contains(script)) {
+          document.head.removeChild(script);
+        }
+        delete (window as any)[callbackName];
+      };
+      
+      script.onerror = () => {
+        console.warn('JSONP search suggestions fetch failed.');
+        cleanup();
+      };
+
+      document.head.appendChild(script);
+    };
+
+    const timeoutId = setTimeout(fetchSuggestionsJSONP, 150); // 150ms debounce
+    return () => clearTimeout(timeoutId);
+  }, [query]);
 
   return (
     <motion.div
@@ -33,9 +77,9 @@ export const SearchBar: React.FC = () => {
     >
       <form 
         onSubmit={handleSearch}
-        className="relative group"
+        className="relative group rounded-2xl transition-shadow duration-500 focus-within:shadow-[0_8px_40px_var(--glow-color)] focus-within:ring-1 focus-within:ring-[var(--accent-color)]/30"
       >
-        <div className={`absolute inset-0 ${preferences.themeConfig.cardClass} transition-all duration-300`} />
+        <div className={`absolute inset-0 ${preferences.themeConfig.cardClass} !rounded-2xl transition-all duration-300`} />
         <div className="relative flex items-center px-4 py-3">
           {/* Engine Selector */}
           <button
@@ -58,7 +102,11 @@ export const SearchBar: React.FC = () => {
           <input
             type="text"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setShowSuggestions(true);
+            }}
+            onFocus={() => setShowSuggestions(true)}
             placeholder={`Search with ${currentEngine.name}...`}
             className="flex-1 bg-transparent border-none outline-none px-4 text-white placeholder:text-white/30 text-lg"
             autoFocus
@@ -102,6 +150,37 @@ export const SearchBar: React.FC = () => {
                       referrerPolicy="no-referrer"
                     />
                     <span className="text-xs font-bold uppercase tracking-widest">{engine.name}</span>
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Suggestions Menu */}
+        <AnimatePresence>
+          {showSuggestions && suggestions.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 10, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 10, scale: 0.98 }}
+              className="absolute top-full left-0 right-0 mt-2 p-2 glass-card border-white/10 bg-black/60 backdrop-blur-3xl overflow-hidden z-[90] shadow-2xl"
+              onMouseLeave={() => setShowSuggestions(false)}
+            >
+              <div className="flex flex-col gap-0.5 max-h-[300px] overflow-y-auto scrollbar-hide">
+                {suggestions.map((suggestion, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={(e) => {
+                      setQuery(suggestion);
+                      setShowSuggestions(false);
+                      handleSearch(e, suggestion);
+                    }}
+                    className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-left text-white/50 hover:text-white hover:bg-white/5 transition-all group"
+                  >
+                    <SearchIcon className="w-3.5 h-3.5 opacity-30 group-hover:opacity-60" />
+                    <span className="text-[13px] font-medium tracking-wide">{suggestion}</span>
                   </button>
                 ))}
               </div>

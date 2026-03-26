@@ -30,9 +30,31 @@ export const SettingsPanel: React.FC = () => {
             <X className="w-5 h-5" />
           </button>
 
-          <h2 className="text-2xl font-display font-bold mb-8 tracking-tight">Preferences</h2>
+          <div className="flex items-center gap-3 mb-8">
+            <img src="/logo.png" alt="Aura Logo" className="w-8 h-8" />
+            <h2 className="text-2xl font-display font-bold tracking-tight">Preferences</h2>
+          </div>
 
           <div className="space-y-8">
+
+            {/* Profile Section */}
+            <section className="space-y-4">
+              <div className="flex items-center gap-2 text-white/50 mb-2">
+                <User className="w-4 h-4" />
+                <span className="text-xs font-bold uppercase tracking-widest">Profile</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-white/70">Your Name</span>
+                <input
+                  type="text"
+                  value={preferences.userName || 'User'}
+                  onChange={(e) => setPreferences({ userName: e.target.value })}
+                  placeholder="Enter your name"
+                  maxLength={20}
+                  className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs font-bold text-white outline-none focus:border-white/30 transition-colors w-32 text-right"
+                />
+              </div>
+            </section>
 
             {/* Display Section */}
             <section className="space-y-4">
@@ -116,7 +138,25 @@ export const SettingsPanel: React.FC = () => {
                     type="checkbox"
                     checked={layout.find(l => l.id === 'weather')?.visible}
                     onChange={() => toggleWidget('weather')}
-                    className="w-5 h-5 rounded-lg bg-white/5 border-white/10 checked:bg-white transition-all"
+                    className={`${preferences.theme === 'minimal' ? 'accent-black' : 'accent-[var(--accent-color)]'} w-4 h-4 rounded border-white/10 bg-white/5 transition-all outline-none focus:ring-1 focus:ring-white/20`}
+                  />
+                </label>
+                <label className="flex items-center justify-between cursor-pointer group">
+                  <span className="text-sm font-medium text-white/70 group-hover:text-white transition-colors">Show Bookmarks</span>
+                  <input
+                    type="checkbox"
+                    checked={layout.find(l => l.id === 'bookmarks')?.visible}
+                    onChange={() => toggleWidget('bookmarks')}
+                    className={`${preferences.theme === 'minimal' ? 'accent-black' : 'accent-[var(--accent-color)]'} w-4 h-4 rounded border-white/10 bg-white/5 transition-all outline-none focus:ring-1 focus:ring-white/20`}
+                  />
+                </label>
+                <label className="flex items-center justify-between cursor-pointer group">
+                  <span className="text-sm font-medium text-white/70 group-hover:text-white transition-colors">Show Focus Tasks</span>
+                  <input
+                    type="checkbox"
+                    checked={layout.find(l => l.id === 'todo')?.visible}
+                    onChange={() => toggleWidget('todo')}
+                    className={`${preferences.theme === 'minimal' ? 'accent-black' : 'accent-[var(--accent-color)]'} w-4 h-4 rounded border-white/10 bg-white/5 transition-all outline-none focus:ring-1 focus:ring-white/20`}
                   />
                 </label>
               </div>

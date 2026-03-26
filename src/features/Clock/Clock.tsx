@@ -1,22 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Play, Pause, SkipBack, SkipForward, Music } from 'lucide-react';
 import { AnalogueClock } from './AnalogueClock';
 import { useTime } from '../../hooks/useTime';
 import { useStore } from '../../stores/useStore';
+import { Music } from 'lucide-react';
 
-const TRACKS = [
-  { title: "Midnight Rain", artist: "Lofi Girl" },
-  { title: "Neon Dreams", artist: "Synthwave Pro" },
-  { title: "Ocean Waves", artist: "Nature Sounds" }
-];
 
-const DateDisplay: React.FC<{ time: Date }> = ({ time }) => {
+const DateDisplay: React.FC<{ time: Date; userName: string }> = ({ time, userName }) => {
   const day = time.toLocaleDateString([], { weekday: 'long' });
   const dateStr = time.toLocaleDateString([], { month: 'long', day: 'numeric' });
+  const hours = time.getHours();
+  const greeting = hours < 12 ? 'Good morning' : hours < 18 ? 'Good afternoon' : 'Good evening';
   
   return (
     <div className="flex flex-col items-start leading-tight">
+      <p className="text-[10px] md:text-xs font-black text-[var(--accent-color)] uppercase tracking-[0.2em] mb-2 opacity-80">
+        {greeting}, {userName}
+      </p>
       <p className="text-lg md:text-xl font-medium text-white/60 tracking-wide uppercase">
         {day},
       </p>
@@ -27,14 +27,12 @@ const DateDisplay: React.FC<{ time: Date }> = ({ time }) => {
   );
 };
 
-const MediaControls: React.FC<{
+
+const TrackDisplay: React.FC<{
   currentTrack: { title: string; artist: string };
   isMediaPlaying: boolean;
-  onPrev: () => void;
-  onNext: () => void;
-  onToggle: () => void;
-}> = ({ currentTrack, isMediaPlaying, onPrev, onNext, onToggle }) => (
-  <div className="flex flex-col items-center gap-2">
+}> = ({ currentTrack }) => (
+  <div className="flex flex-col items-center gap-1">
     <div className="flex flex-col items-center">
       <span className="text-[10px] font-bold text-white/60 uppercase tracking-[0.2em] max-w-[150px] truncate text-center">
         {currentTrack.title}
@@ -42,20 +40,6 @@ const MediaControls: React.FC<{
       <span className="text-[8px] font-medium text-white/30 uppercase tracking-widest text-center">
         {currentTrack.artist}
       </span>
-    </div>
-    <div className="flex items-center gap-4">
-      <button onClick={onPrev} className="text-white/30 hover:text-white transition-colors">
-        <SkipBack className="w-3.5 h-3.5" />
-      </button>
-      <button 
-        onClick={onToggle}
-        className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-all"
-      >
-        {isMediaPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 ml-0.5" />}
-      </button>
-      <button onClick={onNext} className="text-white/30 hover:text-white transition-colors">
-        <SkipForward className="w-3.5 h-3.5" />
-      </button>
     </div>
   </div>
 );
@@ -97,111 +81,40 @@ const Visualizer: React.FC<{ isMediaPlaying: boolean; isAnalogue?: boolean }> = 
 export const Clock: React.FC = () => {
   const { time } = useTime();
   const { 
-    preferences, 
-    isMediaPlaying, 
-    setMediaPlaying, 
+    preferences,
+    isMediaPlaying,
+    currentTrack,
     lastMediaActionTime,
-    setLastMediaActionTime,
-    currentTrack, 
-    setCurrentTrack 
+    setLastMediaActionTime
   } = useStore();
   
-  const [trackIndex, setTrackIndex] = useState(0);
-  const [mediaProgress, setMediaProgress] = useState(0);
   const [showMedia, setShowMedia] = useState(false);
-
   const isAnalogue = preferences.clockType === 'analogue';
-
-  // Simulated media progress
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isMediaPlaying) {
-      interval = setInterval(() => {
-        setMediaProgress(prev => (prev >= 100 ? 0 : prev + 0.2));
-      }, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [isMediaPlaying]);
-
-  // Sync with real media playback if possible
-  useEffect(() => {
-    const updateMediaState = () => {
-      if ('mediaSession' in navigator) {
-        const state = navigator.mediaSession.playbackState;
-        if (state === 'playing') {
-          setMediaPlaying(true);
-          setShowMedia(true);
-        } else if (state === 'paused') {
-          setMediaPlaying(false);
-        }
-      }
-    };
-
-    const interval = setInterval(updateMediaState, 1000);
-    return () => clearInterval(interval);
-  }, [setMediaPlaying]);
 
   // Handle media visibility persistence
   useEffect(() => {
     const checkVisibility = () => {
-      // If actually playing, always show
       if (isMediaPlaying) {
         setShowMedia(true);
         return;
       }
-
-      // If paused but was recently active, show for 5 mins
       if (lastMediaActionTime) {
         const fiveMinutes = 5 * 60 * 1000;
-        const timeSinceLastAction = Date.now() - lastMediaActionTime;
-        if (timeSinceLastAction < fiveMinutes) {
+        if (Date.now() - lastMediaActionTime < fiveMinutes) {
           setShowMedia(true);
         } else {
           setShowMedia(false);
           setLastMediaActionTime(null);
         }
       } else {
-        // Only hide if not playing and no recent action
-        if (!isMediaPlaying) {
-          setShowMedia(false);
-        }
+        setShowMedia(false);
       }
     };
-
     checkVisibility();
     const interval = setInterval(checkVisibility, 2000);
     return () => clearInterval(interval);
-  }, [isMediaPlaying, lastMediaActionTime]);
+  }, [isMediaPlaying, lastMediaActionTime, setLastMediaActionTime]);
 
-  const nextTrack = () => {
-    const next = (trackIndex + 1) % TRACKS.length;
-    setTrackIndex(next);
-    setCurrentTrack(TRACKS[next]);
-    setMediaProgress(0);
-    setLastMediaActionTime(Date.now());
-  };
-
-  const prevTrack = () => {
-    const prev = (trackIndex - 1 + TRACKS.length) % TRACKS.length;
-    setTrackIndex(prev);
-    setCurrentTrack(TRACKS[prev]);
-    setMediaProgress(0);
-    setLastMediaActionTime(Date.now());
-  };
-
-  const togglePlay = () => {
-    const newState = !isMediaPlaying;
-    setMediaPlaying(newState);
-    setLastMediaActionTime(Date.now());
-    
-    // Try to control real media if any
-    if ('mediaSession' in navigator) {
-      if (newState) {
-        // This is tricky as we can't "start" external media, 
-        // but we can update our internal state
-      }
-    }
-  };
 
   const seconds = time.getSeconds();
   const minutes = time.getMinutes();
@@ -226,7 +139,7 @@ export const Clock: React.FC = () => {
 
           {/* Right Side: Date & Media (Fixed width column) */}
           <div className="hidden md:flex flex-col items-start gap-6 w-[200px]">
-            <DateDisplay time={time} />
+            <DateDisplay time={time} userName={preferences.userName || 'User'} />
             <AnimatePresence mode="wait">
               {showMedia ? (
                 <motion.div
@@ -234,38 +147,25 @@ export const Clock: React.FC = () => {
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -10 }}
-                  className="flex flex-col items-center"
+                  className="flex flex-col items-center w-full"
                 >
-                  <MediaControls 
+                  <TrackDisplay 
                     currentTrack={currentTrack}
                     isMediaPlaying={isMediaPlaying}
-                    onPrev={prevTrack}
-                    onNext={nextTrack}
-                    onToggle={togglePlay}
                   />
                   <Visualizer isMediaPlaying={isMediaPlaying} isAnalogue={true} />
                 </motion.div>
               ) : (
-                <motion.button 
-                  key="music-toggle"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  onClick={() => {
-                    setMediaPlaying(true);
-                    setShowMedia(true);
-                  }}
-                  className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-white/30 hover:text-white transition-all group"
-                  title="Play Music"
-                >
-                  <Music className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                </motion.button>
+                <div className="p-2 text-white/10">
+                  <Music className="w-4 h-4" />
+                </div>
               )}
             </AnimatePresence>
           </div>
           
           {/* Mobile Date below */}
-          <div className="md:hidden absolute -bottom-8 left-1/2 -translate-x-1/2 w-full text-center">
-             <DateDisplay time={time} />
+          <div className="md:hidden absolute -bottom-12 left-1/2 -translate-x-1/2 w-full text-center flex justify-center">
+             <DateDisplay time={time} userName={preferences.userName || 'User'} />
           </div>
         </>
       ) : (
@@ -323,35 +223,19 @@ export const Clock: React.FC = () => {
               </div>
               
               <AnimatePresence mode="wait">
-                {showMedia ? (
-                  <div className="flex flex-col items-center mt-6">
-                    <MediaControls 
-                      currentTrack={currentTrack}
-                      isMediaPlaying={isMediaPlaying}
-                      onPrev={prevTrack}
-                      onNext={nextTrack}
-                      onToggle={togglePlay}
-                    />
-                    <Visualizer isMediaPlaying={isMediaPlaying} />
-                  </div>
-                ) : (
+                {showMedia && (
                   <motion.div
-                    key="clock-info"
+                    key="media-digital"
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="flex flex-col items-center mt-1"
+                    exit={{ opacity: 0, y: 10 }}
+                    className="flex flex-col items-center mt-6"
                   >
-                    <button 
-                      onClick={() => {
-                        setMediaPlaying(true);
-                        setShowMedia(true);
-                      }}
-                      className="mt-1 p-2 rounded-full bg-white/5 hover:bg-white/10 text-white/30 hover:text-white transition-all group"
-                      title="Play Music"
-                    >
-                      <Music className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                    </button>
+                    <TrackDisplay 
+                      currentTrack={currentTrack}
+                      isMediaPlaying={isMediaPlaying}
+                    />
+                    <Visualizer isMediaPlaying={isMediaPlaying} />
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -360,8 +244,8 @@ export const Clock: React.FC = () => {
           </div>
 
           {/* 3. Date Div (Center column, same width as parent) */}
-          <div className="flex justify-center w-full mt-6">
-            <DateDisplay time={time} />
+          <div className="flex justify-center w-full mt-8">
+            <DateDisplay time={time} userName={preferences.userName || 'User'} />
           </div>
         </>
       )}

@@ -34,6 +34,7 @@ interface UserPreferences {
   lon: number;
   searchEngine: 'google' | 'bing' | 'duckduckgo' | 'brave';
   clockType: 'digital' | 'analogue';
+  userName: string;
 }
 
 interface WidgetLayout {
@@ -64,6 +65,7 @@ interface AuraState {
   activeWidgetSlots: (string | null)[];
   widgetData: Record<string, any>;
   isWidgetEditMode: boolean;
+  isZenMode: boolean;
   
   // Actions
   setPreferences: (prefs: Partial<UserPreferences>) => void;
@@ -78,6 +80,7 @@ interface AuraState {
   setCurrentTrack: (track: { title: string; artist: string }) => void;
   setActiveLinkCategory: (category: 'quick' | 'ai') => void;
   setEditMode: (edit: boolean) => void;
+  setZenMode: (zen: boolean) => void;
   updateLayout: (id: string, x: number, y: number) => void;
   updateLayoutScale: (id: string, scale: number) => void;
   saveLayout: () => void;
@@ -90,9 +93,6 @@ interface AuraState {
   removeLink: (id: string) => void;
   addBookmark: (bookmark: QuickLink) => void;
   removeBookmark: (id: string) => void;
-  togglePlayback: () => Promise<void>;
-  nextTrack: () => Promise<void>;
-  prevTrack: () => Promise<void>;
 }
 
 declare const chrome: any;
@@ -133,6 +133,7 @@ export const useStore = create<AuraState>()(
         lon: 74.3587,
         searchEngine: 'google',
         clockType: 'digital',
+        userName: 'Shaheer',
       },
       todos: [],
       links: [
@@ -171,6 +172,7 @@ export const useStore = create<AuraState>()(
       lastMediaTabId: null,
       widgetData: {},
       isWidgetEditMode: false,
+      isZenMode: false,
 
       setPreferences: (prefs) => set((state) => {
         const newPrefs = { ...state.preferences, ...prefs };
@@ -209,6 +211,7 @@ export const useStore = create<AuraState>()(
       setCurrentTrack: (track) => set({ currentTrack: track }),
       setActiveLinkCategory: (category) => set({ activeLinkCategory: category }),
       setEditMode: (edit) => set({ isEditMode: edit }),
+      setZenMode: (zen) => set({ isZenMode: zen }),
       updateLayout: (id, x, y) => set((state) => ({
         layout: (state.layout || []).map(l => l.id === id ? { ...l, x, y } : l),
         isLayoutModified: true
@@ -246,78 +249,6 @@ export const useStore = create<AuraState>()(
       removeBookmark: (id) => set((state) => ({
         bookmarks: (state.bookmarks || []).filter(b => b.id !== id)
       })),
-      togglePlayback: async () => {
-        if (typeof chrome === 'undefined' || !chrome.tabs) return;
-        const { lastMediaTabId } = get();
-        const audibleTabs = await chrome.tabs.query({ audible: true });
-        const targetTab = audibleTabs[0] || (lastMediaTabId ? { id: lastMediaTabId } : null);
-
-        if (targetTab?.id) {
-          chrome.scripting.executeScript({
-            target: { tabId: targetTab.id },
-            func: () => {
-              console.log('Aura: Toggling playback...');
-              const playSelectors = ['.ytp-play-button', '[aria-label="Play"]', '[aria-label="Pause"]', '.play-button', '.player-control-play', '[data-testid="control-button-playpause"]', '.vjs-play-control', '[aria-label="Pause playback"]'];
-              let clicked = false;
-              for (const sel of playSelectors) {
-                const b = document.querySelector(sel) as HTMLElement;
-                if (b) { b.click(); clicked = true; break; }
-              }
-              if (!clicked) {
-                const video = document.querySelector('video, audio') as HTMLMediaElement;
-                if (video) {
-                  video.paused ? video.play() : video.pause();
-                  clicked = true;
-                }
-              }
-              // Fallback: Keyboard Space
-              if (!clicked) {
-                window.dispatchEvent(new KeyboardEvent('keydown', { keyCode: 32, key: ' ', which: 32, bubbles: true }));
-              }
-            }
-          });
-        }
-      },
-      nextTrack: async () => {
-        if (typeof chrome === 'undefined' || !chrome.tabs) return;
-        const { lastMediaTabId } = get();
-        const audibleTabs = await chrome.tabs.query({ audible: true });
-        const targetTab = audibleTabs[0] || (lastMediaTabId ? { id: lastMediaTabId } : null);
-
-        if (targetTab?.id) {
-          chrome.scripting.executeScript({
-            target: { tabId: targetTab.id },
-            func: () => {
-              console.log('Aura: Next track...');
-              const nextSelectors = ['.ytp-next-button', '[aria-label="Next"]', '[title="Next"]', '.next-button', '.player-control-next', '[data-testid="control-button-skip-forward"]', '.vjs-next-control'];
-              for (const sel of nextSelectors) {
-                const b = document.querySelector(sel) as HTMLElement;
-                if (b) { b.click(); break; }
-              }
-            }
-          });
-        }
-      },
-      prevTrack: async () => {
-        if (typeof chrome === 'undefined' || !chrome.tabs) return;
-        const { lastMediaTabId } = get();
-        const audibleTabs = await chrome.tabs.query({ audible: true });
-        const targetTab = audibleTabs[0] || (lastMediaTabId ? { id: lastMediaTabId } : null);
-
-        if (targetTab?.id) {
-          chrome.scripting.executeScript({
-            target: { tabId: targetTab.id },
-            func: () => {
-              console.log('Aura: Prev track...');
-              const prevSelectors = ['.ytp-prev-button', '.ytp-previous-button', '[aria-label="Previous"]', '[title="Previous"]', '.prev-button', '.player-control-prev', '[data-testid="control-button-skip-back"]', '.vjs-prev-control'];
-              for (const sel of prevSelectors) {
-                const b = document.querySelector(sel) as HTMLElement;
-                if (b) { b.click(); break; }
-              }
-            }
-          });
-        }
-      },
     }),
     {
       name: 'aura-storage-v26',

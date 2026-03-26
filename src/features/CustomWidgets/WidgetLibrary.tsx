@@ -1,7 +1,7 @@
 import React from 'react';
-import { 
-  StickyNote, Calculator, Timer, Hourglass, Palette, 
-  FileText, Globe, Cpu, Quote, CheckSquare, Droplets, Cookie, 
+import {
+  StickyNote, Calculator, Timer, Hourglass, Palette,
+  FileText, Globe, Cpu, Quote, CheckSquare, Droplets, Cookie,
   Dices, ArrowRightLeft, Wind, Key, Type, Smile, Zap, Layers, Play, X, Plus
 } from 'lucide-react';
 import { useStore } from '../../stores/useStore';
@@ -32,7 +32,7 @@ export const WidgetLibrary: React.FC<{ isOpen: boolean; onClose: () => void; slo
     <AnimatePresence>
       {isOpen && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             onClick={onClose}
             className="absolute inset-0 bg-black/60 backdrop-blur-md"
@@ -46,7 +46,7 @@ export const WidgetLibrary: React.FC<{ isOpen: boolean; onClose: () => void; slo
             <div className="p-6 border-b border-white/10 flex justify-between items-center bg-white/5">
               <div>
                 <h2 className="text-xl font-bold text-white mb-1 tracking-tight">Widget Library</h2>
-                <p className="text-xs text-white/40 uppercase tracking-widest font-bold">21 Pro Features • Slot {slotIndex + 1}</p>
+                <p className="text-xs text-white/40 uppercase tracking-widest font-bold">Pro Features • Slot {slotIndex + 1}</p>
               </div>
               <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-xl transition-all"><X /></button>
             </div>
@@ -64,11 +64,10 @@ export const WidgetLibrary: React.FC<{ isOpen: boolean; onClose: () => void; slo
                         onClose();
                       }}
                       disabled={isSelected && activeWidgetSlots[slotIndex] !== widget.id}
-                      className={`flex items-start gap-4 p-4 rounded-3xl border transition-all text-left group relative overflow-hidden ${
-                        isSelected 
-                          ? 'bg-white/20 border-white/40 cursor-default shadow-inner' 
+                      className={`flex items-start gap-4 p-4 rounded-3xl border transition-all text-left group relative overflow-hidden ${isSelected
+                          ? 'bg-white/20 border-white/40 cursor-default shadow-inner'
                           : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-[var(--accent-color)]/30'
-                      }`}
+                        }`}
                     >
                       <div className={`p-3 rounded-2xl ${isSelected ? 'bg-white text-black' : 'bg-white/10 text-white/70 group-hover:bg-[var(--accent-color)]/20 group-hover:text-white transition-all'}`}>
                         <Icon className="w-6 h-6" />
