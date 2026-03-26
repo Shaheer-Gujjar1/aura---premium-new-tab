@@ -478,6 +478,115 @@ export const MiniPassGen = () => {
   );
 };
 
+export const MiniCalendar = () => {
+  const [now] = useState(new Date());
+  const [viewDate, setViewDate] = useState(new Date());
+  const [events, setEvents] = useWidgetData('calendar_events', []); 
+  const [selDay, setSelDay] = useState<number | null>(null); 
+  const [newEvTitle, setNewEvTitle] = useState('');
+  const [newEvTime, setNewEvTime] = useState('12:00');
+
+  const month = viewDate.getMonth();
+  const year = viewDate.getFullYear();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const firstDay = new Date(year, month, 1).getDay();
+  const monthName = viewDate.toLocaleString('default', { month: 'long' });
+
+  useEffect(() => {
+    const i = setInterval(() => {
+      const cur = new Date();
+      const curD = cur.toISOString().split('T')[0];
+      const curT = cur.getHours().toString().padStart(2,'0') + ':' + cur.getMinutes().toString().padStart(2,'0');
+      
+      const newEvs = events.map((e: any) => {
+        if (e.date === curD && e.time === curT && !e.notified) {
+          pushNotification("Calendar Alert", e.title);
+          return { ...e, notified: true };
+        }
+        return e;
+      });
+      if (JSON.stringify(newEvs) !== JSON.stringify(events)) setEvents(newEvs);
+    }, 15000);
+    return () => clearInterval(i);
+  }, [events]);
+
+  const addEv = () => {
+    if (selDay === null || !newEvTitle) return;
+    const d = new Date(year, month, selDay).toISOString().split('T')[0];
+    setEvents([...events, { id: Date.now(), date: d, time: newEvTime, title: newEvTitle, notified: false }]);
+    setNewEvTitle('');
+    setSelDay(null);
+  };
+
+  const deleteEv = (id: number) => setEvents(events.filter((e: any) => e.id !== id));
+
+  const dayEvents = (d: number) => {
+    const ds = new Date(year, month, d).toISOString().split('T')[0];
+    return events.filter((e: any) => e.date === ds);
+  };
+
+  return (
+    <div className="flex flex-col gap-2 p-2 w-44 h-64 bg-white/5 rounded-2xl border border-white/5 relative overflow-hidden">
+      {selDay !== null ? (
+        <div className="flex flex-col gap-2 h-full animate-in fade-in slide-in-from-right-4 duration-300">
+          <div className="flex justify-between items-center text-[8px] font-black uppercase text-white/30 tracking-widest border-b border-white/5 pb-1">
+            <span>{monthName} {selDay}</span>
+            <button onClick={() => setSelDay(null)} className="hover:text-white"><X size={10}/></button>
+          </div>
+          <div className="flex-1 overflow-y-auto custom-scrollbar space-y-1">
+            {dayEvents(selDay).map((e: any) => (
+              <div key={e.id} className="bg-white/5 p-1.5 rounded-lg border border-white/5 flex justify-between items-center group/ev transition-all hover:border-[var(--accent-color)]/30">
+                <div className="flex flex-col min-w-0">
+                  <span className="text-[9px] font-bold text-white/80 truncate">{e.title}</span>
+                  <span className="text-[7px] text-white/30">{e.time}</span>
+                </div>
+                <button onClick={() => deleteEv(e.id)} className="opacity-0 group-hover/ev:opacity-100 text-rose-500 hover:scale-110 transition-all"><X size={8}/></button>
+              </div>
+            ))}
+            {dayEvents(selDay).length === 0 && <div className="text-[8px] text-white/10 italic text-center py-4">No events today</div>}
+          </div>
+          <div className="flex flex-col gap-1.5 bg-black/40 p-2 rounded-xl border border-white/5">
+            <input value={newEvTitle} onChange={e=>setNewEvTitle(e.target.value)} placeholder="Title..." className="bg-white/5 border border-white/5 rounded-lg px-2 py-1 text-[9px] text-white outline-none focus:border-[var(--accent-color)]/50" />
+            <div className="flex gap-1">
+              <input type="time" value={newEvTime} onChange={e=>setNewEvTime(e.target.value)} className="bg-white/5 border border-white/5 rounded-lg px-2 py-1 text-[9px] text-white outline-none flex-1" />
+              <button onClick={addEv} className="bg-white text-black text-[8px] font-black px-3 rounded-lg active:scale-95 transition-transform hover:bg-[#eee]">ADD</button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <>
+          <div className="flex justify-between items-center text-[8px] font-black uppercase text-white/30 tracking-[0.2em] mb-1">
+            <button onClick={() => setViewDate(new Date(year, month - 1))} className="hover:text-white transition-colors p-1"><RotateCcw size={10} className="rotate-0"/></button>
+            <span>{monthName} {year}</span>
+            <button onClick={() => setViewDate(new Date(year, month + 1))} className="hover:text-white transition-colors p-1"><RotateCcw size={10} className="rotate-180"/></button>
+          </div>
+          <div className="grid grid-cols-7 gap-1 text-center text-[7px] font-black text-white/20 mb-1">
+            {['S','M','T','W','T','F','S'].map(d => <div key={d}>{d}</div>)}
+          </div>
+          <div className="grid grid-cols-7 gap-1 flex-1">
+            {Array.from({ length: firstDay }).map((_, i) => <div key={`empty-${i}`} />)}
+            {Array.from({ length: daysInMonth }).map((_, i) => {
+              const d = i + 1;
+              const isToday = now.getDate() === d && now.getMonth() === month && now.getFullYear() === year;
+              const hasEv = dayEvents(d).length > 0;
+              return (
+                <button 
+                  key={d} 
+                  onClick={() => setSelDay(d)}
+                  className={`relative h-6 rounded-lg flex items-center justify-center text-[9px] font-bold transition-all hover:bg-white/10 ${isToday ? 'bg-[var(--accent-color)] text-white shadow-lg shadow-[var(--accent-color)]/20' : 'text-white/50'}`}
+                >
+                  {d}
+                  {hasEv && <div className="absolute bottom-0.5 w-1 h-1 rounded-full bg-rose-500 animate-pulse" />}
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
 export const MiniStopwatch = () => {
   const [t, setT] = useState(0);
   const [r, setR] = useState(false);
@@ -582,6 +691,7 @@ export const WidgetRenderer: React.FC<{ id: string; onRemove: () => void }> = ({
       );
       case 'hydration': return <MiniHydration />;
       case 'dice': return <MiniDice />;
+      case 'calendar': return <MiniCalendar />;
       case 'passgen': return <MiniPassGen />;
       case 'counter': return <MiniCounter />;
       case 'mood': return <MiniMood />;

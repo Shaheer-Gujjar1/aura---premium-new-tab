@@ -17,6 +17,7 @@ export const WIDGET_LIBRARY = [
   { id: 'quotes', name: 'Inspiration', icon: Quote, description: 'Daily wisdom' },
   { id: 'hydration', name: 'Water', icon: Droplets, description: 'Drink tracker' },
   { id: 'dice', name: 'Dice', icon: Dices, description: 'Random roller' },
+  { id: 'calendar', name: 'Calendar', icon: CheckSquare, description: 'Events & alerts' },
   { id: 'passgen', name: 'Password', icon: Key, description: 'Secure gen' },
   { id: 'counter', name: 'Counter', icon: Type, description: 'Char count' },
   { id: 'mood', name: 'Mood', icon: Smile, description: 'Mood log' },
