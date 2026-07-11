@@ -20,22 +20,22 @@ export const SettingsPanel: React.FC = () => {
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            className={`${preferences.themeConfig.cardClass} w-full max-w-md p-8 relative glass-glow`}
+            className={`${preferences.themeConfig.cardClass} w-full max-w-md p-8 relative glass-glow max-h-[85vh] flex flex-col`}
             onClick={(e) => e.stopPropagation()}
           >
           <button
             onClick={() => setSettingsOpen(false)}
-            className="absolute top-6 right-6 p-2 hover:bg-white/10 rounded-full transition-colors"
+            className="absolute top-6 right-6 p-2 hover:bg-white/10 rounded-full transition-colors z-10"
           >
             <X className="w-5 h-5" />
           </button>
 
-          <div className="flex items-center gap-3 mb-8">
+          <div className="flex items-center gap-3 mb-8 flex-shrink-0">
             <img src="/logo.png" alt="Aura Logo" className="w-8 h-8" />
             <h2 className="text-2xl font-display font-bold tracking-tight">Preferences</h2>
           </div>
 
-          <div className="space-y-8">
+          <div className="space-y-8 overflow-y-auto pr-2 custom-scrollbar flex-1">
 
             {/* Profile Section */}
             <section className="space-y-4">

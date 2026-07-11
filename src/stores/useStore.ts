@@ -152,13 +152,13 @@ export const useStore = create<AuraState>()(
       bookmarks: [],
       activeLinkCategory: 'quick',
       layout: [
-        { id: 'weather', x: 0, y: 0, scale: 1, visible: true },
-        { id: 'bookmarks', x: 0, y: 0, scale: 1, visible: true },
-        { id: 'todo', x: 0, y: 0, scale: 1, visible: true },
-        { id: 'clock', x: 0, y: 0, scale: 1, visible: true },
-        { id: 'links', x: 0, y: 0, scale: 1, visible: true },
-        { id: 'custom-0', x: 0, y: 0, scale: 1, visible: true },
-        { id: 'custom-1', x: 0, y: 0, scale: 1, visible: true },
+        { id: 'weather', x: 0, y: 0, scale: 0.9, visible: true },
+        { id: 'bookmarks', x: 0, y: 0, scale: 0.9, visible: true },
+        { id: 'todo', x: 0, y: 0, scale: 0.9, visible: true },
+        { id: 'clock', x: 0, y: 0, scale: 0.9, visible: true },
+        { id: 'links', x: 0, y: 0, scale: 0.9, visible: true },
+        { id: 'custom-0', x: 0, y: 0, scale: 0.9, visible: true },
+        { id: 'custom-1', x: 0, y: 0, scale: 0.9, visible: true },
       ],
       isLayoutModified: false,
       isEditMode: false,
@@ -222,7 +222,7 @@ export const useStore = create<AuraState>()(
       })),
       saveLayout: () => set({ isLayoutModified: false }),
       resetLayout: () => set((state) => ({
-        layout: (state.layout || []).map(l => ({ ...l, x: 0, y: 0, scale: 1 })),
+        layout: (state.layout || []).map(l => ({ ...l, x: 0, y: 0, scale: 0.9 })),
         isLayoutModified: false
       })),
       toggleWidget: (id) => set((state) => ({

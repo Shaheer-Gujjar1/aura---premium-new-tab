@@ -1,12 +1,67 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Bookmark, Plus, X, Trash2, ExternalLink } from 'lucide-react';
 import { useStore } from '../../stores/useStore';
+
+declare const chrome: any;
 
 export const Bookmarks: React.FC = () => {
   const { bookmarks, addBookmark, removeBookmark } = useStore();
   const [isAdding, setIsAdding] = useState(false);
   const [newBookmark, setNewBookmark] = useState({ title: '', url: '' });
+  const [browserBookmarks, setBrowserBookmarks] = useState<Array<{ id: string; title: string; url: string }>>([]);
+  const [hasChromeBookmarks, setHasChromeBookmarks] = useState(false);
+
+  useEffect(() => {
+    if (typeof chrome !== 'undefined' && chrome.bookmarks) {
+      setHasChromeBookmarks(true);
+      const fetchBrowserBookmarks = () => {
+        chrome.bookmarks.getTree((treeNode: any[]) => {
+          const list: Array<{ id: string; title: string; url: string }> = [];
+          const traverse = (nodes: any[]) => {
+            for (const node of nodes) {
+              if (node.url) {
+                list.push({
+                  id: node.id,
+                  title: node.title || node.url,
+                  url: node.url
+                });
+              }
+              if (node.children) {
+                traverse(node.children);
+              }
+            }
+          };
+          traverse(treeNode);
+          setBrowserBookmarks(list);
+        });
+      };
+
+      fetchBrowserBookmarks();
+
+      if (chrome.bookmarks.onCreated) {
+        chrome.bookmarks.onCreated.addListener(fetchBrowserBookmarks);
+      }
+      if (chrome.bookmarks.onRemoved) {
+        chrome.bookmarks.onRemoved.addListener(fetchBrowserBookmarks);
+      }
+      if (chrome.bookmarks.onChanged) {
+        chrome.bookmarks.onChanged.addListener(fetchBrowserBookmarks);
+      }
+
+      return () => {
+        if (chrome.bookmarks.onCreated) {
+          chrome.bookmarks.onCreated.removeListener(fetchBrowserBookmarks);
+        }
+        if (chrome.bookmarks.onRemoved) {
+          chrome.bookmarks.onRemoved.removeListener(fetchBrowserBookmarks);
+        }
+        if (chrome.bookmarks.onChanged) {
+          chrome.bookmarks.onChanged.removeListener(fetchBrowserBookmarks);
+        }
+      };
+    }
+  }, []);
 
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
@@ -15,13 +70,28 @@ export const Bookmarks: React.FC = () => {
       if (!url.startsWith('http')) {
         url = `https://${url}`;
       }
-      addBookmark({
-        id: crypto.randomUUID(),
-        title: newBookmark.title,
-        url: url
-      });
+      if (hasChromeBookmarks) {
+        chrome.bookmarks.create({
+          title: newBookmark.title,
+          url: url
+        });
+      } else {
+        addBookmark({
+          id: crypto.randomUUID(),
+          title: newBookmark.title,
+          url: url
+        });
+      }
       setNewBookmark({ title: '', url: '' });
       setIsAdding(false);
+    }
+  };
+
+  const handleDelete = (id: string) => {
+    if (hasChromeBookmarks) {
+      chrome.bookmarks.remove(id);
+    } else {
+      removeBookmark(id);
     }
   };
 
@@ -33,6 +103,16 @@ export const Bookmarks: React.FC = () => {
       return null;
     }
   };
+
+  const getHostname = (url: string) => {
+    try {
+      return new URL(url).hostname || url;
+    } catch {
+      return url;
+    }
+  };
+
+  const displayBookmarks = hasChromeBookmarks ? browserBookmarks : bookmarks;
 
   return (
     <div className="w-64 max-h-[300px] flex flex-col">
@@ -50,7 +130,7 @@ export const Bookmarks: React.FC = () => {
       </div>
 
       <div className="space-y-1 max-h-[250px] overflow-y-auto pr-1 custom-scrollbar">
-        {bookmarks.length === 0 && !isAdding && (
+        {displayBookmarks.length === 0 && !isAdding && (
           <p className="text-center py-8 text-xs text-white/20 uppercase tracking-widest">No bookmarks yet</p>
         )}
 
@@ -66,7 +146,7 @@ export const Bookmarks: React.FC = () => {
               <div className="flex justify-between items-center">
                 <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Add Bookmark</span>
                 <button type="button" onClick={() => setIsAdding(false)}>
-                  <X className="w-3 h-3 text-white/40 hover:text-white" />
+                  <X className="w-3.5 h-3.5 text-white/40 hover:text-white" />
                 </button>
               </div>
               <input
@@ -93,7 +173,7 @@ export const Bookmarks: React.FC = () => {
             </motion.form>
           )}
 
-          {bookmarks.map((bookmark) => (
+          {displayBookmarks.map((bookmark) => (
             <motion.div
               key={bookmark.id}
               initial={{ opacity: 0, x: -10 }}
@@ -123,12 +203,12 @@ export const Bookmarks: React.FC = () => {
                     {bookmark.title}
                   </span>
                   <span className="text-[8px] text-white/30 truncate">
-                    {new URL(bookmark.url).hostname}
+                    {getHostname(bookmark.url)}
                   </span>
                 </div>
               </a>
               <button
-                onClick={() => removeBookmark(bookmark.id)}
+                onClick={() => handleDelete(bookmark.id)}
                 className="p-1 text-white/10 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
               >
                 <Trash2 className="w-3.5 h-3.5" />

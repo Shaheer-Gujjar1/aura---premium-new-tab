@@ -94,9 +94,16 @@ const NewTab: React.FC = () => {
   useEffect(() => {
     // Only works when running as a Chrome Extension with "tabs" permission
     if (typeof chrome !== 'undefined' && chrome.tabs) {
+      let active = true;
       const detectAudibleTab = async () => {
+        if (!active || typeof chrome === 'undefined' || !chrome.runtime || !chrome.runtime.id || !chrome.tabs) {
+          return;
+        }
         try {
           const audibleTabs = await chrome.tabs.query({ audible: true });
+          if (!active || typeof chrome === 'undefined' || !chrome.runtime || !chrome.runtime.id) {
+            return;
+          }
           if (audibleTabs.length > 0) {
             const activeTab = audibleTabs[0];
             const title = activeTab.title || 'Unknown Media';
@@ -122,7 +129,15 @@ const NewTab: React.FC = () => {
       };
 
       const interval = setInterval(detectAudibleTab, 2000);
-      return () => clearInterval(interval);
+      const cleanup = () => {
+        active = false;
+        clearInterval(interval);
+      };
+      window.addEventListener('beforeunload', cleanup);
+      return () => {
+        cleanup();
+        window.removeEventListener('beforeunload', cleanup);
+      };
     } else {
       // Fallback for web-only dev environment (using local MediaSession)
       if ('mediaSession' in navigator) {
@@ -294,7 +309,7 @@ const NewTab: React.FC = () => {
       </div>
  
       {/* 3. Main Center Content: Phased Zen Transition */}
-      <main className="relative z-20 flex flex-col items-center justify-center w-full h-full max-w-6xl py-12 overflow-hidden">
+      <main className="relative z-20 flex flex-col items-center justify-center w-full h-full max-w-6xl py-12 overflow-visible">
         <motion.div 
           animate={isZenMode ? { scale: 1.2, y: -20 } : { scale: 1, y: 0 }}
           transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
