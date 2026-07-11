@@ -91,6 +91,8 @@ interface AuraState {
   removeTodo: (id: string) => void;
   addLink: (link: QuickLink) => void;
   removeLink: (id: string) => void;
+  addAiLink: (link: QuickLink) => void;
+  removeAiLink: (id: string) => void;
   addBookmark: (bookmark: QuickLink) => void;
   removeBookmark: (id: string) => void;
 }
@@ -242,6 +244,12 @@ export const useStore = create<AuraState>()(
       })),
       removeLink: (id) => set((state) => ({
         links: (state.links || []).filter(l => l.id !== id)
+      })),
+      addAiLink: (link) => set((state) => ({
+        aiLinks: [...(state.aiLinks || []), link]
+      })),
+      removeAiLink: (id) => set((state) => ({
+        aiLinks: (state.aiLinks || []).filter(l => l.id !== id)
       })),
       addBookmark: (bookmark) => set((state) => ({
         bookmarks: [...(state.bookmarks || []), bookmark]
