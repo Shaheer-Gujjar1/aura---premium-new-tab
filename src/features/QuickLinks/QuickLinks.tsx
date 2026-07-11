@@ -43,7 +43,7 @@ export const QuickLinks: React.FC = () => {
   const getFavicon = (url: string) => {
     try {
       const domain = new URL(url).hostname;
-      return `https://icon.horse/icon/${domain}`;
+      return `https://www.google.com/s2/favicons?sz=128&domain=${domain}`;
     } catch (e) {
       return null;
     }

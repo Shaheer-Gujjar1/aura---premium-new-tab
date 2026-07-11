@@ -6,7 +6,7 @@ import { useStore } from '../stores/useStore';
 const GOOGLE_APPS = [
   { name: 'Web Store', url: 'https://chrome.google.com/webstore', icon: 'https://imgs.search.brave.com/qnamV7kCUSH_wAMhKTiy2IIqVM1Oz8dbPrG310AT4RE/rs:fit:32:32:1:0/g:ce/aHR0cDovL2Zhdmlj/b25zLnNlYXJjaC5i/cmF2ZS5jb20vaWNv/bnMvY2Y5NGQyMmMx/YjQyZDE2OGQ4Yzc1/NjkyMmJiMWYzZDIw/YjRlODY1NDJhYjAw/Mzc5ZDIyMTc5ZDZl/MTc5NWE2Ni9jaHJv/bWV3ZWJzdG9yZS5n/b29nbGUuY29tLw' },
   { name: 'Search', url: 'https://www.google.com', icon: 'https://www.gstatic.com/images/branding/product/1x/googleg_48dp.png' },
-  { name: 'Gmail', url: 'https://mail.google.com', icon: 'https://logodownload.org/wp-content/uploads/2018/03/gmail-logo-0.png' },
+  { name: 'Gmail', url: 'https://mail.google.com', icon: 'https://www.gstatic.com/images/branding/product/1x/gmail_2020q4_32dp.png' },
   { name: 'Drive', url: 'https://drive.google.com', icon: 'https://www.gstatic.com/images/branding/product/1x/drive_2020q4_32dp.png' },
   { name: 'Calendar', url: 'https://calendar.google.com', icon: 'https://www.gstatic.com/calendar/images/dynamiclogo_2020q4/calendar_31_2x.png' },
   { name: 'Meet', url: 'https://meet.google.com', icon: 'https://www.gstatic.com/images/branding/product/1x/meet_2020q4_32dp.png' },
@@ -36,8 +36,20 @@ const GOOGLE_APPS = [
   { name: 'Colab', url: 'https://colab.research.google.com', icon: 'https://colab.research.google.com/img/favicon.ico' },
   { name: 'Search Console', url: 'https://search.google.com/search-console', icon: 'https://www.gstatic.com/images/branding/product/1x/search_console_48dp.png' },
   { name: 'Trends', url: 'https://trends.google.com', icon: 'https://www.gstatic.com/images/branding/product/1x/trends_48dp.png' },
-  { name: 'One', url: 'https://one.google.com', icon: 'https://www.gstatic.com/images/branding/product/1x/google_one_48dp.png' },
+  { name: 'One', url: 'https://one.google.com', icon: 'https://www.google.com/s2/favicons?sz=128&domain=one.google.com' },
 ];
+
+const getAppIcon = (url: string, explicitIcon?: string) => {
+  if (explicitIcon && !explicitIcon.endsWith('favicon.ico') && !explicitIcon.includes('favicon') && !explicitIcon.includes('favicons')) {
+    return explicitIcon;
+  }
+  try {
+    const domain = new URL(url).hostname;
+    return `https://www.google.com/s2/favicons?sz=128&domain=${domain}`;
+  } catch (e) {
+    return explicitIcon || `https://www.google.com/s2/favicons?sz=128&domain=google.com`;
+  }
+};
 
 export const GoogleApps: React.FC = () => {
   const { isGoogleAppsOpen, setGoogleAppsOpen, preferences } = useStore();
@@ -79,7 +91,7 @@ export const GoogleApps: React.FC = () => {
                 >
                   <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-white/10 transition-all shadow-lg overflow-hidden">
                     <img 
-                      src={app.icon} 
+                      src={getAppIcon(app.url, app.icon)} 
                       alt={app.name} 
                       className="w-7 h-7 object-contain group-hover:scale-110 transition-transform" 
                       referrerPolicy="no-referrer" 
