@@ -32,13 +32,14 @@ export const Weather: React.FC = () => {
     condition: string;
     icon: React.ReactNode;
     windSpeed: number;
+    rainChance: number;
   } | null>(null);
 
   useEffect(() => {
     const fetchWeather = async () => {
       if (preferences.lat === undefined || preferences.lon === undefined) return;
 
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${preferences.lat}&longitude=${preferences.lon}&current_weather=true`;
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${preferences.lat}&longitude=${preferences.lon}&current_weather=true&hourly=precipitation_probability`;
       try {
         const response = await fetch(url);
         if (!response.ok) {
@@ -47,13 +48,18 @@ export const Weather: React.FC = () => {
         }
         const data = await response.json();
         const current = data.current_weather;
+        const currentHour = new Date().getHours();
+        const rainChance = data.hourly?.precipitation_probability?.[currentHour] !== undefined
+          ? data.hourly.precipitation_probability[currentHour]
+          : 0;
         
         if (current) {
           setWeather({
             temp: Math.round(current.temperature),
             condition: getWeatherCondition(current.weathercode),
             icon: getWeatherIcon(current.weathercode),
-            windSpeed: Math.round(current.windspeed)
+            windSpeed: Math.round(current.windspeed),
+            rainChance: rainChance
           });
         }
       } catch (error) {
@@ -86,9 +92,15 @@ export const Weather: React.FC = () => {
           <span className="text-3xl font-display font-bold tracking-tighter">{weather.temp}°</span>
           <div className="flex flex-col">
             <span className="text-xs text-white font-semibold leading-none mb-1">{weather.condition}</span>
-            <div className="flex items-center gap-1 text-[10px] text-white/50">
-              <Wind className="w-2 h-2" />
-              <span>{weather.windSpeed} km/h</span>
+            <div className="flex items-center gap-2 text-[10px] text-white/50">
+              <div className="flex items-center gap-0.5">
+                <Wind className="w-2.5 h-2.5" />
+                <span>{weather.windSpeed} km/h</span>
+              </div>
+              <div className="flex items-center gap-0.5">
+                <CloudRain className="w-2.5 h-2.5 text-blue-400" />
+                <span>{weather.rainChance}%</span>
+              </div>
             </div>
           </div>
         </div>
