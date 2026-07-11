@@ -373,7 +373,7 @@ const NewTab: React.FC = () => {
       {/* Custom Widget Slots - Root-Level Bottom Right (Vertical) */}
       <div className={`absolute right-4 bottom-4 md:right-8 md:bottom-8 z-50 flex flex-col gap-4 items-end pointer-events-none transition-opacity duration-700 ${isZenMode ? 'opacity-0' : 'opacity-100'}`}>
         <AnimatePresence mode="popLayout">
-          {preferences.theme !== 'minimal' && [0, 1].map((idx) => {
+          {[0, 1].map((idx) => {
             const activeId = activeWidgetSlots[idx];
             const isVisible = activeId || useStore.getState().isWidgetEditMode;
 
