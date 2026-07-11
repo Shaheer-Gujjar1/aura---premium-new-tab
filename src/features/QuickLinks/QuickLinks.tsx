@@ -4,7 +4,7 @@ import { ExternalLink, Plus, X, Trash2 } from 'lucide-react';
 import { useStore } from '../../stores/useStore';
 
 export const QuickLinks: React.FC = () => {
-  const { links, aiLinks, activeLinkCategory, addLink, removeLink } = useStore();
+  const { links, aiLinks, activeLinkCategory, addLink, removeLink, addAiLink, removeAiLink } = useStore();
   const [isAdding, setIsAdding] = useState(false);
   const [newLink, setNewLink] = useState({ title: '', url: '' });
 
@@ -17,20 +17,32 @@ export const QuickLinks: React.FC = () => {
       if (!url.startsWith('http')) {
         url = `https://${url}`;
       }
-      addLink({
+      const item = {
         id: crypto.randomUUID(),
         title: newLink.title,
         url: url
-      });
+      };
+      if (activeLinkCategory === 'ai') {
+        addAiLink(item);
+      } else {
+        addLink(item);
+      }
       setNewLink({ title: '', url: '' });
       setIsAdding(false);
+    }
+  };
+
+  const handleDelete = (id: string) => {
+    if (activeLinkCategory === 'ai') {
+      removeAiLink(id);
+    } else {
+      removeLink(id);
     }
   };
 
   const getFavicon = (url: string) => {
     try {
       const domain = new URL(url).hostname;
-      // Using icon.horse for better compatibility with various image formats including PNG
       return `https://icon.horse/icon/${domain}`;
     } catch (e) {
       return null;
@@ -69,7 +81,7 @@ export const QuickLinks: React.FC = () => {
             </span>
           </a>
           <button
-            onClick={() => removeLink(link.id)}
+            onClick={() => handleDelete(link.id)}
             className="absolute -top-2 -right-2 w-6 h-6 bg-red-500/80 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 z-20"
           >
             <Trash2 className="w-3 h-3" />
@@ -79,13 +91,13 @@ export const QuickLinks: React.FC = () => {
 
       <AnimatePresence>
         {isAdding && (
-          <div className="fixed inset-0 z-[9999] flex items-start justify-center pt-2 bg-black/60 backdrop-blur-sm">
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
             <motion.form
-              initial={{ opacity: 0, scale: 0.95, y: -20 }}
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: -20 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
               onSubmit={handleAdd}
-              className="glass-card p-3.5 flex flex-col gap-2.5 w-64 border-white/20 shadow-2xl relative z-10 mt-1"
+              className="glass-card p-3.5 flex flex-col gap-2.5 w-64 border-white/20 shadow-2xl relative z-10"
             >
               <div className="flex justify-between items-center px-1">
                 <span className="text-[10px] font-bold uppercase tracking-widest text-white/50">New Shortcut</span>
