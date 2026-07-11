@@ -48,6 +48,12 @@ export const Bookmarks: React.FC = () => {
       if (chrome.bookmarks.onChanged) {
         chrome.bookmarks.onChanged.addListener(fetchBrowserBookmarks);
       }
+      if (chrome.bookmarks.onMoved) {
+        chrome.bookmarks.onMoved.addListener(fetchBrowserBookmarks);
+      }
+      if (chrome.bookmarks.onChildrenReordered) {
+        chrome.bookmarks.onChildrenReordered.addListener(fetchBrowserBookmarks);
+      }
 
       return () => {
         if (chrome.bookmarks.onCreated) {
@@ -58,6 +64,12 @@ export const Bookmarks: React.FC = () => {
         }
         if (chrome.bookmarks.onChanged) {
           chrome.bookmarks.onChanged.removeListener(fetchBrowserBookmarks);
+        }
+        if (chrome.bookmarks.onMoved) {
+          chrome.bookmarks.onMoved.removeListener(fetchBrowserBookmarks);
+        }
+        if (chrome.bookmarks.onChildrenReordered) {
+          chrome.bookmarks.onChildrenReordered.removeListener(fetchBrowserBookmarks);
         }
       };
     }
