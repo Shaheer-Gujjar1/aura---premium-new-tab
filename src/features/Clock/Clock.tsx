@@ -54,12 +54,19 @@ const Visualizer: React.FC<{ isMediaPlaying: boolean; isAnalogue?: boolean }> = 
           initial={{ height: 4 }}
           animate={isMediaPlaying ? {
             height: [
-              10 + Math.sin(i * 0.5) * 5,
-              (isAnalogue ? 25 : 45) + Math.sin(i * 0.3 + 2) * 10,
-              15 + Math.sin(i * 0.4 + 4) * 8,
-              10 + Math.sin(i * 0.5) * 5
+              10 + Math.sin(i * 0.5 + 0) * 5,
+              (isAnalogue ? 18 : 30) + Math.sin(i * 0.3 + 1) * 8,
+              (isAnalogue ? 25 : 45) + Math.sin(i * 0.4 + 2) * 10,
+              (isAnalogue ? 20 : 35) + Math.sin(i * 0.2 + 3) * 6,
+              15 + Math.sin(i * 0.5 + 4) * 8,
+              10 + Math.sin(i * 0.3 + 5) * 5,
+              (isAnalogue ? 22 : 40) + Math.sin(i * 0.4 + 6) * 9,
+              (isAnalogue ? 28 : 50) + Math.sin(i * 0.2 + 7) * 12,
+              (isAnalogue ? 16 : 28) + Math.sin(i * 0.5 + 8) * 7,
+              12 + Math.sin(i * 0.3 + 9) * 6,
+              10 + Math.sin(i * 0.5 + 10) * 5
             ],
-            opacity: [0.4, 0.8, 0.5, 0.9, 0.4],
+            opacity: [0.4, 0.7, 0.5, 0.8, 0.6, 0.9, 0.5, 0.8, 0.6, 0.7, 0.4],
           } : {
             height: 4,
             opacity: 0.3,
