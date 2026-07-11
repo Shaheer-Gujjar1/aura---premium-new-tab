@@ -49,7 +49,7 @@ export const GoogleApps: React.FC = () => {
           initial={{ opacity: 0, scale: 0.95, y: -20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: -20 }}
-          className={`fixed top-24 right-8 w-[340px] ${preferences.themeConfig.cardClass} glass-glow overflow-hidden z-[99999] shadow-2xl`}
+          className={`fixed top-24 right-8 w-[340px] ${preferences.themeConfig.cardClass} glass-glow overflow-hidden z-[100000] shadow-2xl`}
         >
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">

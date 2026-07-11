@@ -222,7 +222,7 @@ const NewTab: React.FC = () => {
       </AnimatePresence>
 
       {/* 2. Right Corner: High-Density Control Hub (Zen & Main) */}
-      <div className="absolute top-4 right-4 md:top-8 md:right-8 z-[100] flex flex-col items-end gap-3 pointer-events-none">
+      <div className="absolute top-4 right-4 md:top-8 md:right-8 z-[9999] flex flex-col items-end gap-3 pointer-events-none">
         {/* System Bar (Always Visible) */}
         <div className="flex items-center gap-2 pointer-events-auto">
           {/* Zen Toggle (Eye) */}
@@ -268,7 +268,7 @@ const NewTab: React.FC = () => {
             <motion.div 
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex flex-col items-end gap-2"
+              className="flex flex-col items-end gap-2 pointer-events-auto"
             >
               {/* Secondary Controls: Apps & Mode */}
               <div className="flex gap-2">

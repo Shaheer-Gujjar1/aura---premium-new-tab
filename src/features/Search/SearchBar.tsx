@@ -123,10 +123,10 @@ export const SearchBar: React.FC = () => {
         <AnimatePresence>
           {isMenuOpen && (
             <motion.div
-              initial={{ opacity: 0, y: 10, scale: 0.95 }}
+              initial={{ opacity: 0, y: -10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 10, scale: 0.95 }}
-              className="absolute top-full left-0 mt-2 p-2 glass-card border-white/10 bg-black/40 backdrop-blur-2xl w-48 overflow-hidden z-[100]"
+              exit={{ opacity: 0, y: -10, scale: 0.95 }}
+              className="absolute bottom-full left-0 mb-2 p-2 glass-card border-white/10 bg-black/40 backdrop-blur-2xl w-48 overflow-hidden z-[100]"
             >
               <div className="flex flex-col gap-1">
                 {ENGINES.map((engine) => (
