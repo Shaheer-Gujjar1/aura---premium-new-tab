@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { Sun, Cloud, CloudRain, Wind, MapPin, CloudLightning, CloudSnow } from 'lucide-react';
+import { Sun, Cloud, CloudRain, Wind, MapPin, CloudLightning, CloudSnow, Thermometer } from 'lucide-react';
 import { useStore } from '../../stores/useStore';
 
 const getWeatherIcon = (code: number) => {
@@ -31,7 +31,7 @@ export const Weather: React.FC = () => {
     temp: number;
     condition: string;
     icon: React.ReactNode;
-    windSpeed: number;
+    feelsLike: number;
     rainChance: number;
   } | null>(null);
 
@@ -39,7 +39,7 @@ export const Weather: React.FC = () => {
     const fetchWeather = async () => {
       if (preferences.lat === undefined || preferences.lon === undefined) return;
 
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${preferences.lat}&longitude=${preferences.lon}&current_weather=true&hourly=precipitation_probability`;
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${preferences.lat}&longitude=${preferences.lon}&current_weather=true&hourly=precipitation_probability,apparent_temperature`;
       try {
         const response = await fetch(url);
         if (!response.ok) {
@@ -52,13 +52,16 @@ export const Weather: React.FC = () => {
         const rainChance = data.hourly?.precipitation_probability?.[currentHour] !== undefined
           ? data.hourly.precipitation_probability[currentHour]
           : 0;
+        const feelsLike = data.hourly?.apparent_temperature?.[currentHour] !== undefined
+          ? Math.round(data.hourly.apparent_temperature[currentHour])
+          : (current ? Math.round(current.temperature) : 0);
         
         if (current) {
           setWeather({
             temp: Math.round(current.temperature),
             condition: getWeatherCondition(current.weathercode),
             icon: getWeatherIcon(current.weathercode),
-            windSpeed: Math.round(current.windspeed),
+            feelsLike: feelsLike,
             rainChance: rainChance
           });
         }
@@ -94,8 +97,8 @@ export const Weather: React.FC = () => {
             <span className="text-xs text-white font-semibold leading-none mb-1">{weather.condition}</span>
             <div className="flex items-center gap-2 text-[10px] text-white/50">
               <div className="flex items-center gap-0.5">
-                <Wind className="w-2.5 h-2.5" />
-                <span>{weather.windSpeed} km/h</span>
+                <Thermometer className="w-2.5 h-2.5 text-orange-400" />
+                <span>Feels {weather.feelsLike}°</span>
               </div>
               <div className="flex items-center gap-0.5">
                 <CloudRain className="w-2.5 h-2.5 text-blue-400" />

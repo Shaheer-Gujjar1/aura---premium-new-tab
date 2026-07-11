@@ -223,13 +223,22 @@ export const WeatherDetail: React.FC = () => {
                   // Show only within -12 to +12 hours range (total 24h)
                   if (diffHours < -12 || diffHours > 12) return null;
 
+                  const rainChance = weather.hourly.precipitation_probability[i] || 0;
+
                   return (
                     <div key={time} className={`flex items-center justify-between bg-white/5 p-3 rounded-xl ${Math.abs(diffHours) < 0.5 ? 'border border-white/20 bg-white/10' : ''}`}>
-                      <span className="text-xs font-medium text-white/60">
+                      <span className="text-xs font-medium text-white/60 w-16">
                         {date.getHours() === now.getHours() ? 'Now' : date.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true })}
                       </span>
-                      {React.cloneElement(getWeatherIcon(weather.hourly.weathercode[i]) as React.ReactElement, { className: 'w-4 h-4' })}
-                      <span className="text-xs font-bold">
+                      <div className="flex items-center gap-1.5 flex-1 justify-center">
+                        {React.cloneElement(getWeatherIcon(weather.hourly.weathercode[i]) as React.ReactElement, { className: 'w-4 h-4' })}
+                        {rainChance > 0 && (
+                          <span className="text-[10px] font-bold text-blue-400">
+                            {rainChance}%
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-xs font-bold w-8 text-right">
                         {Math.round(weather.hourly.temperature_2m[i])}°
                       </span>
                     </div>
