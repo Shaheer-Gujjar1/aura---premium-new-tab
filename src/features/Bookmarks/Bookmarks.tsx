@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Bookmark, Plus, X, Trash2, ExternalLink } from 'lucide-react';
 import { useStore } from '../../stores/useStore';
+import { handleNavigation } from '../../utils/navigation';
 
 declare const chrome: any;
 
@@ -110,6 +111,9 @@ export const Bookmarks: React.FC = () => {
   const getFavicon = (url: string) => {
     try {
       const domain = new URL(url).hostname;
+      if (domain.includes('whatsapp.com')) {
+        return 'https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg';
+      }
       return `https://www.google.com/s2/favicons?sz=128&domain=${domain}`;
     } catch (e) {
       return null;
@@ -195,8 +199,7 @@ export const Bookmarks: React.FC = () => {
             >
               <a 
                 href={bookmark.url} 
-                target="_blank" 
-                rel="noopener noreferrer"
+                onClick={(e) => handleNavigation(bookmark.url, e)}
                 className="flex items-center gap-2 flex-1 min-w-0"
               >
                 <div className="w-6 h-6 rounded bg-white/5 flex items-center justify-center text-white/40 group-hover:text-white transition-colors overflow-hidden p-1">

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ExternalLink, Plus, X, Trash2 } from 'lucide-react';
 import { useStore } from '../../stores/useStore';
+import { handleNavigation } from '../../utils/navigation';
 
 export const QuickLinks: React.FC = () => {
   const { links, aiLinks, activeLinkCategory, addLink, removeLink, addAiLink, removeAiLink } = useStore();
@@ -43,6 +44,9 @@ export const QuickLinks: React.FC = () => {
   const getFavicon = (url: string) => {
     try {
       const domain = new URL(url).hostname;
+      if (domain.includes('whatsapp.com')) {
+        return 'https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg';
+      }
       return `https://www.google.com/s2/favicons?sz=128&domain=${domain}`;
     } catch (e) {
       return null;
@@ -61,8 +65,7 @@ export const QuickLinks: React.FC = () => {
         >
           <a
             href={link.url}
-            target="_blank"
-            rel="noopener noreferrer"
+            onClick={(e) => handleNavigation(link.url, e)}
             className="flex flex-col items-center gap-1.5 p-2.5 w-24 hover:scale-105 transition-all group"
           >
             <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-white/10 transition-all overflow-hidden p-2 shadow-inner">

@@ -2,6 +2,18 @@
 
 All notable changes made to the Aura Premium New Tab extension project are documented below.
 
+## [1.1.1] - 2026-07-13
+
+### Added
+- **WhatsApp Web Default Shortcut**: Added `web.whatsapp.com` as a default shortcut in the quick links list.
+- **WhatsApp Favicon Override**: Intercepted `whatsapp.com` domains in Bookmarks, Quick Links, and Google Apps to fetch the official, high-resolution SVG icon, resolving the missing icon issue.
+
+### Changed
+- **Same-Tab Navigation**: Updated links (Quick Links, Bookmarks, and Google Apps) to open in the same tab instead of a new tab. Implemented a robust utility that dynamically queries the active tab ID to update the URL (preventing Chrome Extension API signature mismatch crashes) and safely falls back to standard window location navigation on failure or web context.
+
+### Fixed
+- **DeepSeek & General Tab Crash Fix**: Resolved page crashes and navigation failures for DeepSeek AI and other shortcuts when triggered from the extension popup/new-tab page.
+
 ## [1.1.0] - 2026-07-11
 
 ### Added

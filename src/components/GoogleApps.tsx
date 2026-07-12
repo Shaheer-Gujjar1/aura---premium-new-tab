@@ -2,6 +2,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Search } from 'lucide-react';
 import { useStore } from '../stores/useStore';
+import { handleNavigation } from '../utils/navigation';
 
 const GOOGLE_APPS = [
   { name: 'Web Store', url: 'https://chrome.google.com/webstore', icon: 'https://imgs.search.brave.com/qnamV7kCUSH_wAMhKTiy2IIqVM1Oz8dbPrG310AT4RE/rs:fit:32:32:1:0/g:ce/aHR0cDovL2Zhdmlj/b25zLnNlYXJjaC5i/cmF2ZS5jb20vaWNv/bnMvY2Y5NGQyMmMx/YjQyZDE2OGQ4Yzc1/NjkyMmJiMWYzZDIw/YjRlODY1NDJhYjAw/Mzc5ZDIyMTc5ZDZl/MTc5NWE2Ni9jaHJv/bWV3ZWJzdG9yZS5n/b29nbGUuY29tLw' },
@@ -45,6 +46,9 @@ const getAppIcon = (url: string, explicitIcon?: string) => {
   }
   try {
     const domain = new URL(url).hostname;
+    if (domain.includes('whatsapp.com')) {
+      return 'https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg';
+    }
     return `https://www.google.com/s2/favicons?sz=128&domain=${domain}`;
   } catch (e) {
     return explicitIcon || `https://www.google.com/s2/favicons?sz=128&domain=google.com`;
@@ -85,8 +89,7 @@ export const GoogleApps: React.FC = () => {
                 <a
                   key={app.name}
                   href={app.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  onClick={(e) => handleNavigation(app.url, e)}
                   className="flex flex-col items-center gap-2 p-3 rounded-2xl hover:bg-white/5 transition-all group"
                 >
                   <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-white/10 transition-all shadow-lg overflow-hidden">
@@ -112,8 +115,7 @@ export const GoogleApps: React.FC = () => {
         <div className="p-4 bg-white/5 border-t border-white/5 flex justify-center">
           <a 
             href="https://about.google/products/" 
-            target="_blank" 
-            rel="noopener noreferrer"
+            onClick={(e) => handleNavigation('https://about.google/products/', e)}
             className="text-[10px] font-bold uppercase tracking-widest text-white/30 hover:text-white/60 transition-colors"
           >
             More from Google
