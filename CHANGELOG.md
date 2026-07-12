@@ -2,6 +2,16 @@
 
 All notable changes made to the Aura Premium New Tab extension project are documented below.
 
+## [1.1.2] - 2026-07-13
+
+### Changed
+- **Safe Same-Tab Navigation (`chrome.tabs.update`)**: Replaced the `chrome.tabs.create` + `chrome.tabs.remove` tab replacement workaround in `handleNavigation` (`src/utils/navigation.ts`) with direct same-tab updates using `chrome.tabs.update`. This resolves the issue where target pages (`chat.deepseek.com`) opened for a split second in a new tab and then crashed or closed automatically when the adjacent extension tab was destroyed.
+- **Event-Driven Cross-Tab Media Detection**: Refactored `detectAudibleTab` in `src/pages/NewTab.tsx` from polling `chrome.tabs.query({ audible: true })` every 2 seconds (`setInterval`) to event-driven listeners on `chrome.tabs.onUpdated` and `chrome.tabs.onRemoved`. Eliminating continuous 2-second IPC queries across browser renderer processes prevents process deadlocks and crashes when opening or streaming from complex AI web applications.
+- **Removed Cross-Origin Extension Hooks**: Removed `web_accessible_resources` matching `<all_urls>` from `public/manifest.json`. This prevents web applications with strict Content Security Policies and anti-bot verification (e.g., DeepSeek / Cloudflare Turnstile) from detecting injected cross-origin resource mappings and terminating the page process.
+
+### Fixed
+- **DeepSeek Split-Second Crash**: Fixed the Linux Chrome renderer crash where `chat.deepseek.com` would begin loading for a split second before crashing and closing automatically upon navigation.
+
 ## [1.1.1] - 2026-07-13
 
 ### Added
@@ -9,10 +19,11 @@ All notable changes made to the Aura Premium New Tab extension project are docum
 - **WhatsApp Favicon Override**: Intercepted `whatsapp.com` domains in Bookmarks, Quick Links, and Google Apps to fetch the official, high-resolution SVG icon, resolving the missing icon issue.
 
 ### Changed
-- **Same-Tab Navigation**: Updated links (Quick Links, Bookmarks, and Google Apps) to open in the same tab instead of a new tab. Implemented a robust utility that dynamically queries the active tab ID to update the URL (preventing Chrome Extension API signature mismatch crashes) and safely falls back to standard window location navigation on failure or web context.
+- **Same-Tab Navigation Implementation**: Transitioned shortcut links across Quick Links, Bookmarks, and Google Apps from opening in new tabs (`target="_blank"`) to same-tab navigation via `handleNavigation`.
+- **Manifest Permissions Pruning**: Removed unused permissions (`"scripting"`, `"system.cpu"`, `"system.memory"`, and `"host_permissions": ["<all_urls>"]`) from the extension manifest to improve extension security and reduce attack surface.
 
 ### Fixed
-- **DeepSeek & General Tab Crash Fix**: Resolved page crashes and navigation failures for DeepSeek AI and other shortcuts when triggered from the extension popup/new-tab page.
+- **DeepSeek Initial Crash Issue**: Resolved the initial `Aw, Snap!` crash on `chat.deepseek.com` by pruning broad host permissions and removing intrusive background polling.
 
 ## [1.1.0] - 2026-07-11
 

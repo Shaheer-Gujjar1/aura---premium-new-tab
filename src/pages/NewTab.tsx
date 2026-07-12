@@ -90,7 +90,7 @@ const NewTab: React.FC = () => {
     };
   }, []);
 
-  // Extended Cross-Tab Media Detection
+  // Extended Cross-Tab Media Detection (Event-driven to avoid IPC polling crashes across browser tabs)
   useEffect(() => {
     // Only works when running as a Chrome Extension with "tabs" permission
     if (typeof chrome !== 'undefined' && chrome.tabs) {
@@ -128,10 +128,34 @@ const NewTab: React.FC = () => {
         }
       };
 
-      const interval = setInterval(detectAudibleTab, 2000);
+      // Initial check
+      detectAudibleTab();
+
+      // Listen to tab updates and removals instead of polling via setInterval every 2 seconds
+      const handleTabUpdate = (_tabId: number, changeInfo: any) => {
+        if (changeInfo.audible !== undefined || changeInfo.title !== undefined) {
+          detectAudibleTab();
+        }
+      };
+      const handleTabRemove = () => {
+        detectAudibleTab();
+      };
+
+      if (chrome.tabs.onUpdated) {
+        chrome.tabs.onUpdated.addListener(handleTabUpdate);
+      }
+      if (chrome.tabs.onRemoved) {
+        chrome.tabs.onRemoved.addListener(handleTabRemove);
+      }
+
       const cleanup = () => {
         active = false;
-        clearInterval(interval);
+        if (chrome.tabs.onUpdated) {
+          chrome.tabs.onUpdated.removeListener(handleTabUpdate);
+        }
+        if (chrome.tabs.onRemoved) {
+          chrome.tabs.onRemoved.removeListener(handleTabRemove);
+        }
       };
       window.addEventListener('beforeunload', cleanup);
       return () => {
