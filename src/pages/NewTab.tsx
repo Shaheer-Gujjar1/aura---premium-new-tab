@@ -90,98 +90,11 @@ const NewTab: React.FC = () => {
     };
   }, []);
 
-  // Extended Cross-Tab Media Detection (Event-driven to avoid IPC polling crashes across browser tabs)
+  // Media detection feature has been completely disabled as it causes severe IPC deadlocks and 
+  // 'Aw, Snap!' renderer process crashes on Linux Chrome when interacting with cross-origin isolated 
+  // web applications like chat.deepseek.com.
   useEffect(() => {
-    // Only works when running as a Chrome Extension with "tabs" permission
-    if (typeof chrome !== 'undefined' && chrome.tabs) {
-      let active = true;
-      const detectAudibleTab = async () => {
-        if (!active || typeof chrome === 'undefined' || !chrome.runtime || !chrome.runtime.id || !chrome.tabs) {
-          return;
-        }
-        try {
-          const audibleTabs = await chrome.tabs.query({ audible: true });
-          if (!active || typeof chrome === 'undefined' || !chrome.runtime || !chrome.runtime.id) {
-            return;
-          }
-          if (audibleTabs.length > 0) {
-            const activeTab = audibleTabs[0];
-            const title = activeTab.title || 'Unknown Media';
-
-            // Basic extraction: "Video Title - YouTube" -> "Video Title"
-            const cleanedTitle = title.split(' - ')[0].replace(/\(\d+\)\s/, '');
-            const artist = title.includes(' - ') ? title.split(' - ')[1] : 'Audible Tab';
-
-            useStore.getState().setCurrentTrack({
-              title: cleanedTitle,
-              artist: artist
-            });
-            useStore.getState().setMediaPlaying(true);
-            if (activeTab.id) {
-              useStore.setState({ lastMediaTabId: activeTab.id });
-            }
-          } else {
-            useStore.getState().setMediaPlaying(false);
-          }
-        } catch (e) {
-          console.error('Cross-Tab detection failed:', e);
-        }
-      };
-
-      // Initial check
-      detectAudibleTab();
-
-      // Listen to tab updates and removals instead of polling via setInterval every 2 seconds
-      const handleTabUpdate = (_tabId: number, changeInfo: any) => {
-        if (changeInfo.audible !== undefined || changeInfo.title !== undefined) {
-          detectAudibleTab();
-        }
-      };
-      const handleTabRemove = () => {
-        detectAudibleTab();
-      };
-
-      if (chrome.tabs.onUpdated) {
-        chrome.tabs.onUpdated.addListener(handleTabUpdate);
-      }
-      if (chrome.tabs.onRemoved) {
-        chrome.tabs.onRemoved.addListener(handleTabRemove);
-      }
-
-      const cleanup = () => {
-        active = false;
-        if (chrome.tabs.onUpdated) {
-          chrome.tabs.onUpdated.removeListener(handleTabUpdate);
-        }
-        if (chrome.tabs.onRemoved) {
-          chrome.tabs.onRemoved.removeListener(handleTabRemove);
-        }
-      };
-      window.addEventListener('beforeunload', cleanup);
-      return () => {
-        cleanup();
-        window.removeEventListener('beforeunload', cleanup);
-      };
-    } else {
-      // Fallback for web-only dev environment (using local MediaSession)
-      if ('mediaSession' in navigator) {
-        const updateMediaInfo = () => {
-          const metadata = navigator.mediaSession.metadata;
-          if (metadata) {
-            useStore.getState().setCurrentTrack({
-              title: metadata.title || 'Unknown Title',
-              artist: metadata.artist || 'Unknown Artist'
-            });
-          }
-          const state = navigator.mediaSession.playbackState;
-          if (state) {
-            useStore.getState().setMediaPlaying(state === 'playing');
-          }
-        };
-        const interval = setInterval(updateMediaInfo, 1000);
-        return () => clearInterval(interval);
-      }
-    }
+    // Disabled to prevent process crashes.
   }, []);
 
   const toggleFullscreen = async () => {

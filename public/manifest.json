@@ -3,7 +3,7 @@
   "name": "Aura - Premium New Tab",
   "version": "1.0.0",
   "description": "A breathtaking, modular, context-aware personal workspace for your browser.",
-  "permissions": ["storage", "unlimitedStorage", "tabs", "bookmarks"],
+  "permissions": ["storage", "unlimitedStorage", "bookmarks"],
   "chrome_url_overrides": {
     "newtab": "index.html"
   },
