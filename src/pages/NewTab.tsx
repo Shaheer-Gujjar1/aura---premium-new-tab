@@ -90,12 +90,81 @@ const NewTab: React.FC = () => {
     };
   }, []);
 
-  // Media detection feature has been completely disabled as it causes severe IPC deadlocks and 
-  // 'Aw, Snap!' renderer process crashes on Linux Chrome when interacting with cross-origin isolated 
-  // web applications like chat.deepseek.com.
+  // Safe Passive Media Detection
+  // We completely avoid chrome.tabs.onUpdated/onRemoved listeners because they force 
+  // background IPC event delivery that causes Linux Chrome crashes when visiting COOP/COEP sites 
+  // like chat.deepseek.com. Instead, we perform a lightweight passive poll every 5 seconds.
   useEffect(() => {
-    // Disabled to prevent process crashes.
+    if (typeof chrome !== 'undefined' && chrome.tabs) {
+      let active = true;
+      const detectAudibleTab = async () => {
+        if (!active || typeof chrome === 'undefined' || !chrome.runtime || !chrome.runtime.id || !chrome.tabs) {
+          return;
+        }
+        try {
+          const audibleTabs = await chrome.tabs.query({ audible: true });
+          if (!active || typeof chrome === 'undefined' || !chrome.runtime || !chrome.runtime.id) {
+            return;
+          }
+          if (audibleTabs.length > 0) {
+            const activeTab = audibleTabs[0];
+            // Skip gathering details if the tab URL belongs to known crash-prone sites
+            const url = activeTab.url || '';
+            if (url.includes('deepseek.com')) {
+              useStore.getState().setMediaPlaying(false);
+              return;
+            }
+
+            const title = activeTab.title || 'Unknown Media';
+            const cleanedTitle = title.split(' - ')[0].replace(/\(\d+\)\s/, '');
+            const artist = title.includes(' - ') ? title.split(' - ')[1] : 'Audible Tab';
+
+            useStore.getState().setCurrentTrack({
+              title: cleanedTitle,
+              artist: artist
+            });
+            useStore.getState().setMediaPlaying(true);
+            if (activeTab.id) {
+              useStore.setState({ lastMediaTabId: activeTab.id });
+            }
+          } else {
+            useStore.getState().setMediaPlaying(false);
+          }
+        } catch (e) {
+          console.error('Cross-Tab detection failed:', e);
+        }
+      };
+
+      // Perform a passive check every 5 seconds (non-intrusive)
+      const interval = setInterval(detectAudibleTab, 5000);
+      detectAudibleTab();
+
+      return () => {
+        active = false;
+        clearInterval(interval);
+      };
+    } else {
+      // Fallback for web-only dev environment (using local MediaSession)
+      if ('mediaSession' in navigator) {
+        const updateMediaInfo = () => {
+          const metadata = navigator.mediaSession.metadata;
+          if (metadata) {
+            useStore.getState().setCurrentTrack({
+              title: metadata.title || 'Unknown Title',
+              artist: metadata.artist || 'Unknown Artist'
+            });
+          }
+          const state = navigator.mediaSession.playbackState;
+          if (state) {
+            useStore.getState().setMediaPlaying(state === 'playing');
+          }
+        };
+        const interval = setInterval(updateMediaInfo, 1000);
+        return () => clearInterval(interval);
+      }
+    }
   }, []);
+
 
   const toggleFullscreen = async () => {
     try {
