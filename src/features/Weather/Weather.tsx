@@ -40,13 +40,9 @@ export const Weather: React.FC = () => {
       if (preferences.lat === undefined || preferences.lon === undefined) return;
 
       const url = `https://api.open-meteo.com/v1/forecast?latitude=${preferences.lat}&longitude=${preferences.lon}&current_weather=true&hourly=precipitation_probability,apparent_temperature`;
-      try {
-        const response = await fetch(url);
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`Status: ${response.status}, Body: ${errorText}`);
-        }
-        const data = await response.json();
+      const cacheKey = `weather_data_${preferences.lat}_${preferences.lon}`;
+
+      const applyData = (data: any) => {
         const current = data.current_weather;
         const currentHour = new Date().getHours();
         const rainChance = data.hourly?.precipitation_probability?.[currentHour] !== undefined
@@ -65,13 +61,41 @@ export const Weather: React.FC = () => {
             rainChance: rainChance
           });
         }
+      };
+
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        try {
+          const { timestamp, data } = JSON.parse(cached);
+          if (Date.now() - timestamp < 1800000) { // 30 minutes
+            applyData(data);
+            return;
+          }
+        } catch (e) {}
+      }
+
+      try {
+        const response = await fetch(url);
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Status: ${response.status}, Body: ${errorText}`);
+        }
+        const data = await response.json();
+        localStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), data }));
+        applyData(data);
       } catch (error) {
         console.error(`Failed to fetch weather from ${url}:`, error);
+        if (cached) {
+          try {
+            const { data } = JSON.parse(cached);
+            applyData(data);
+          } catch (e) {}
+        }
       }
     };
 
     fetchWeather();
-    const interval = setInterval(fetchWeather, 600000); // Update every 10 mins
+    const interval = setInterval(fetchWeather, 600000); // Check/update interval
     return () => clearInterval(interval);
   }, [preferences.lat, preferences.lon]);
 

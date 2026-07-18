@@ -99,7 +99,10 @@ export const GoogleApps: React.FC = () => {
                       className="w-7 h-7 object-contain group-hover:scale-110 transition-transform" 
                       referrerPolicy="no-referrer" 
                       onError={(e) => {
-                        (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(app.name)}&background=random&color=fff&size=64&bold=true`;
+                        const target = e.target as HTMLImageElement;
+                        if (target.dataset.fallback === 'true') return;
+                        target.dataset.fallback = 'true';
+                        target.src = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100%" height="100%" fill="%23ffffff10" rx="20"/><text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="50" font-weight="bold" font-family="sans-serif">${encodeURIComponent(app.name.charAt(0).toUpperCase())}</text></svg>`;
                       }}
                     />
                   </div>

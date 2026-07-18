@@ -46,6 +46,25 @@ export const BackgroundManager: React.FC = () => {
       if (preferences.lat === undefined || preferences.lon === undefined) return;
       
       const url = `https://api.open-meteo.com/v1/forecast?latitude=${preferences.lat}&longitude=${preferences.lon}&current_weather=true`;
+      const cacheKey = `weather_bg_${preferences.lat}_${preferences.lon}`;
+
+      const applyData = (data: any) => {
+        if (data.current_weather) {
+          setWeatherCode(data.current_weather.weathercode);
+        }
+      };
+
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        try {
+          const { timestamp, data } = JSON.parse(cached);
+          if (Date.now() - timestamp < 1800000) { // 30 minutes
+            applyData(data);
+            return;
+          }
+        } catch (e) {}
+      }
+
       try {
         const response = await fetch(url);
         if (!response.ok) {
@@ -53,11 +72,16 @@ export const BackgroundManager: React.FC = () => {
           throw new Error(`Status: ${response.status}, Body: ${errorText}`);
         }
         const data = await response.json();
-        if (data.current_weather) {
-          setWeatherCode(data.current_weather.weathercode);
-        }
+        localStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), data }));
+        applyData(data);
       } catch (error) {
         console.error(`Failed to fetch weather code for background from ${url}:`, error);
+        if (cached) {
+          try {
+            const { data } = JSON.parse(cached);
+            applyData(data);
+          } catch (e) {}
+        }
       }
     };
 

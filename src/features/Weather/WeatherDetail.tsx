@@ -42,6 +42,27 @@ export const WeatherDetail: React.FC = () => {
     if (preferences.lat === undefined || preferences.lon === undefined) return;
 
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${preferences.lat}&longitude=${preferences.lon}&current_weather=true&hourly=temperature_2m,relativehumidity_2m,apparent_temperature,precipitation_probability,weathercode&daily=weathercode,temperature_2m_max,temperature_2m_min&past_days=1&forecast_days=1&timezone=auto`;
+    const cacheKey = `weather_detail_${preferences.lat}_${preferences.lon}`;
+
+    const applyData = (data: any) => {
+      if (data.current_weather && data.hourly && data.daily) {
+        setWeather(data);
+      } else {
+        throw new Error('Incomplete weather data received');
+      }
+    };
+
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+      try {
+        const { timestamp, data } = JSON.parse(cached);
+        if (Date.now() - timestamp < 1800000) { // 30 minutes
+          applyData(data);
+          return;
+        }
+      } catch (e) {}
+    }
+
     try {
       setLoading(true);
       const response = await fetch(url);
@@ -50,31 +71,46 @@ export const WeatherDetail: React.FC = () => {
         throw new Error(`Status: ${response.status}, Body: ${errorText}`);
       }
       const data = await response.json();
-      if (data.current_weather && data.hourly && data.daily) {
-        setWeather(data);
-      } else {
-        throw new Error('Incomplete weather data received');
-      }
+      localStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), data }));
+      applyData(data);
     } catch (error) {
       console.error(`Failed to fetch weather details from ${url}:`, error);
+      if (cached) {
+        try {
+          const { data } = JSON.parse(cached);
+          applyData(data);
+        } catch (e) {}
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!search.trim()) return;
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      if (search.trim()) {
+        const fetchResults = async () => {
+          try {
+            const response = await fetch(
+              `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(search)}&count=5&language=en&format=json`
+            );
+            const data = await response.json();
+            setResults(data.results || []);
+          } catch (error) {
+            console.error('Geocoding search failed:', error);
+          }
+        };
+        fetchResults();
+      } else {
+        setResults([]);
+      }
+    }, 300);
 
-    try {
-      const response = await fetch(
-        `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(search)}&count=5&language=en&format=json`
-      );
-      const data = await response.json();
-      setResults(data.results || []);
-    } catch (error) {
-      console.error('Geocoding search failed:', error);
-    }
+    return () => clearTimeout(delayDebounceFn);
+  }, [search]);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
   };
 
   const selectLocation = (result: any) => {
@@ -129,7 +165,7 @@ export const WeatherDetail: React.FC = () => {
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 10 }}
-                      className="absolute top-full left-0 right-0 mt-2 glass-card border-white/10 overflow-hidden z-20"
+                      className="absolute top-full left-0 right-0 mt-2 glass-card border-white/10 overflow-hidden z-20 backdrop-blur-md bg-black/60"
                     >
                       {results.map((res) => (
                         <button

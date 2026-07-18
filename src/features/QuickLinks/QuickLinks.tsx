@@ -75,7 +75,10 @@ export const QuickLinks: React.FC = () => {
                 className="w-full h-full object-contain opacity-80 group-hover:opacity-100 transition-opacity"
                 referrerPolicy="no-referrer"
                 onError={(e) => {
-                  (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(link.title)}&background=random&color=fff`;
+                  const target = e.target as HTMLImageElement;
+                  if (target.dataset.fallback === 'true') return;
+                  target.dataset.fallback = 'true';
+                  target.src = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100%" height="100%" fill="%23ffffff10" rx="20"/><text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="50" font-weight="bold" font-family="sans-serif">${encodeURIComponent(link.title.charAt(0).toUpperCase())}</text></svg>`;
                 }}
               />
             </div>
@@ -100,7 +103,7 @@ export const QuickLinks: React.FC = () => {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               onSubmit={handleAdd}
-              className="glass-card p-3.5 flex flex-col gap-2.5 w-64 border-white/20 shadow-2xl relative z-10"
+              className="glass-card p-3.5 flex flex-col gap-2.5 w-64 border-white/20 shadow-2xl relative z-10 -translate-y-[30px]"
             >
               <div className="flex justify-between items-center px-1">
                 <span className="text-[10px] font-bold uppercase tracking-widest text-white/50">New Shortcut</span>
