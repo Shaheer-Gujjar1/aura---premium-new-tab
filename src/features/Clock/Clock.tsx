@@ -180,6 +180,8 @@ export const Clock: React.FC = () => {
           {/* Digital View: Increased Width Container */}
           <div className="relative min-w-[320px] md:min-w-[440px] h-[240px] md:h-[280px] flex items-center justify-center">
             {/* Digital Time Center */}
+            <div className="flex flex-col items-center justify-center z-10">
+              <div className="flex items-center gap-4">
                 <div className="flex items-center tabular-nums">
                   <div className="w-[1.8ch] flex justify-center relative">
                     <AnimatePresence mode="popLayout">
