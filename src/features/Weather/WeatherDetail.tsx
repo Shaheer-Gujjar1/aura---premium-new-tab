@@ -104,7 +104,7 @@ export const WeatherDetail: React.FC = () => {
       } else {
         setResults([]);
       }
-    }, 300);
+    }, 150); // Faster 150ms debounce
 
     return () => clearTimeout(delayDebounceFn);
   }, [search]);
@@ -165,7 +165,7 @@ export const WeatherDetail: React.FC = () => {
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 10 }}
-                      className="absolute top-full left-0 right-0 mt-2 glass-card border-white/10 overflow-hidden z-20 backdrop-blur-md bg-black/60"
+                      className="absolute top-full left-0 right-0 mt-2 border border-white/10 overflow-hidden z-20 backdrop-blur-xl bg-black/85 rounded-2xl"
                     >
                       {results.map((res) => (
                         <button

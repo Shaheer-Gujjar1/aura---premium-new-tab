@@ -183,7 +183,7 @@ export const Clock: React.FC = () => {
             <div className="flex flex-col items-center justify-center z-10">
               <div className="flex items-center gap-4">
                 <div className="flex items-center tabular-nums">
-                  <div className="w-[1.8ch] flex justify-center relative">
+                  <div className="w-[85px] md:w-[125px] h-[72px] md:h-[96px] flex items-center justify-center relative text-7xl md:text-8xl font-display font-bold tracking-tighter">
                     <AnimatePresence mode="popLayout">
                       <motion.span
                         key={displayHours}
@@ -191,14 +191,14 @@ export const Clock: React.FC = () => {
                         animate={{ y: 0, opacity: 1, filter: 'blur(0px)' }}
                         exit={{ y: -20, opacity: 0, filter: 'blur(10px)' }}
                         transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                        className="text-7xl md:text-8xl font-display font-bold tracking-tighter drop-shadow-[0_4px_24px_rgba(0,0,0,0.5)]"
+                        className="absolute text-center drop-shadow-[0_4px_24px_rgba(0,0,0,0.5)]"
                       >
                         {displayHours}
                       </motion.span>
                     </AnimatePresence>
                   </div>
                   <span className="text-7xl md:text-8xl font-display font-bold tracking-tighter opacity-20 mx-1">:</span>
-                  <div className="w-[1.8ch] flex justify-center relative">
+                  <div className="w-[85px] md:w-[125px] h-[72px] md:h-[96px] flex items-center justify-center relative text-7xl md:text-8xl font-display font-bold tracking-tighter">
                     <AnimatePresence mode="popLayout">
                       <motion.span
                         key={displayMinutes}
@@ -206,14 +206,14 @@ export const Clock: React.FC = () => {
                         animate={{ y: 0, opacity: 1, filter: 'blur(0px)' }}
                         exit={{ y: -20, opacity: 0, filter: 'blur(10px)' }}
                         transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                        className="text-7xl md:text-8xl font-display font-bold tracking-tighter drop-shadow-[0_4px_24px_rgba(0,0,0,0.5)]"
+                        className="absolute text-center drop-shadow-[0_4px_24px_rgba(0,0,0,0.5)]"
                       >
                         {displayMinutes}
                       </motion.span>
                     </AnimatePresence>
                   </div>
                   <span className="text-7xl md:text-8xl font-display font-bold tracking-tighter opacity-20 mx-1">:</span>
-                  <div className="w-[1.8ch] flex justify-center relative">
+                  <div className="w-[85px] md:w-[125px] h-[72px] md:h-[96px] flex items-center justify-center relative text-7xl md:text-8xl font-display font-bold tracking-tighter">
                     <AnimatePresence mode="popLayout">
                       <motion.span
                         key={displaySeconds}
@@ -221,7 +221,7 @@ export const Clock: React.FC = () => {
                         animate={{ y: 0, opacity: 1, filter: 'blur(0px)' }}
                         exit={{ y: -20, opacity: 0, filter: 'blur(10px)' }}
                         transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                        className="text-7xl md:text-8xl font-display font-bold tracking-tighter drop-shadow-[0_4px_24px_rgba(0,0,0,0.5)]"
+                        className="absolute text-center drop-shadow-[0_4px_24px_rgba(0,0,0,0.5)]"
                       >
                         {displaySeconds}
                       </motion.span>
